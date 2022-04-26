@@ -1,9 +1,12 @@
-
-
  #歌曲URL dict["data"]["url"]
  #搜索id dict["result"][song]<循环>[id]/[name]/[author]
+ #cookies dict["cookies"]
+ 
+ #保存cookies：
+ #先登录，然后cookies = a.cookies.get_dicts()
+ #a为login时的cookies
+ #不要反复登录 会风控
 
-    
 
 init python:
     from urllib import urlopen
@@ -22,6 +25,8 @@ init python:
     Mainurl = "https://netease-cloud-music-api-murex-gamma.vercel.app"
     PhoneLogin = "/login/cellphone?phone="
     PhoneLoginPw = "&password="
+    REFRESH_LOGIN = "/login/refresh" #返回新cookie
+
     Search = "/search?keywords="
     Search_Limit = "&limit=10"
     Music_Check = "/check/music?id="
