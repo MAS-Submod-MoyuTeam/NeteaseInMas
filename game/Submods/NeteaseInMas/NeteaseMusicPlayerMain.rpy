@@ -3,60 +3,115 @@
  #cookies dict["cookies"]
  
  #保存cookies：
- #先登录，然后cookies = a.cookies.get_dicts()
+ #先登录，然后cookies = a.cookies.get_dict()
  #a为login时的cookies
  #不要反复登录 会风控
 
+init -5 python in np_globals:
 
-init python:
-    from urllib import urlopen
+    debug = True
+
+    Basedir = renpy.config.basedir
+    Catch = Basedir + "/game/Submods/NeteaseInMas/Catch"
+    VerifyPath = False #Basedir + "/game/python-packages/certifi/cacert.pem"
+
+    ######################## API
+    Mainurl = "https://netease-cloud-music-api-murex-gamma.vercel.app"
+
+    PhoneLogin = "/login/cellphone?phone="
+    PhoneLoginPw = "&password="
+    PhoneLoginPwMd5 = "&md5_password="
+    RefreshLogin = "/login/refresh" #返回新cookie
+    LoginStatus = "/login/status"
+    Logout = "/logout"
+    # 账户名称：dict["data"]["profile"]["nickname"]
+    # 未登录：dict["data"]["profile"] = Null
+    
+    Search = "/search?keywords="
+    SearchLimit = "&limit=10"
+    MusicCheck = "/check/music?id="
+    MusicDownloadurl = "/song/download/url?id="
+    ########################
+    Music_Id = ""
+    _LoginPhone = None
+    _LoginPw = None
+    CatchSize = 2048
+    Cookies = None
+
+init 985 python in np_util:
     from urllib import quote
-    from urllib import urlretrieve
     import ssl
     import json
     import requests
+    import renpy
+    import store
+    import hashlib
+    import store.np_globals as np_globals
+    
+ 
+    def Music_Login(phone,pw):
+        #登录
+        pw = str(pw)
+        md5pw = hashlib.md5(pw.encode('utf-8'))
+        url = np_globals.Mainurl + np_globals.PhoneLogin + str(phone) + np_globals.PhoneLoginPwMd5 + md5pw.hexdigest()
+        login = requests.get(url, verify=np_globals.VerifyPath)
+        np_globals.Cookies = login.cookies
+        store.persistent.np_Cookie = login.cookies
 
-    #关闭证书验证
-    import ssl
-    unverified = ssl._create_unverified_context()
-    Basedir = renpy.config.basedir
-    Catch = Basedir + "game/Submods/NeteaseInMas/Catch/"
+    def Music_Login_Refresh():
+        #刷新登录
+        #url = Mainurl + RefreshLogin
+        #refresh = requests.get(url, cookies=np_globals.Cookie, verify = VerifyPath)
+        #new_cookies_dict = refresh.json()
+        #new_cookies = requests.util.cookiejar_from_dict(new_cookies_dict["cookie"])
+        #np_globals.Cookie = new_cookies
+        return False
+    
+    def Music_Login_Status():
+        """
+        检查登陆状态, 离线返回False, 在线返回昵称
+        """
+        cookie = np_globals.Cookies
+        url = np_globals.Mainurl + np_globals.LoginStatus
+        check = requests.get(url, cookies = cookie, verify = np_globals.VerifyPath)
+        result = check.json()
+        if result["data"]["profile"] == None:
+            return False
+        else:
+            return rsult["data"]["profile"]["nickname"]
 
-    Mainurl = "https://netease-cloud-music-api-murex-gamma.vercel.app"
-    PhoneLogin = "/login/cellphone?phone="
-    PhoneLoginPw = "&password="
-    REFRESH_LOGIN = "/login/refresh" #返回新cookie
+    def Music_Logout():
+        """
+        注销账号 删除所有的cookies
+        """
+        cookie = np_globals.Cookies
+        url = np_globals.Mainurl + np_globals.logout
+        requests.get(url, cookie = cookie, verify = np_globals.VerifyPath)
+        np_globals.Cookies = None
+        store.persistent.np_Cookie = None
+        #renpy.jump("np_emptylabel")
 
-    Search = "/search?keywords="
-    Search_Limit = "&limit=10"
-    Music_Check = "/check/music?id="
-    Music_Downloadurl = "/song/download/url?id="
-
-    Music_Id = ""
-
-
-    def Music_Login():
-        url = "https://netease-cloud-music-api-murex-gamma.vercel.app/login/cellphone?phone=15753515952&password=LOVEcxs2002"
-        urlopen(url, context=unverified)
-
-    def Music_Getid():
-        return 0
 
     def Music_Download(id):
+        #根据ID下载flac
+        cookie = np_globals.Cookies
         id = str(id)
-        url = Mainurl + Music_Downloadurl + id
-        music = urlopen(url, context=unverified)
-        getdata = json.loads(music.read())
+        url = np_globals.Mainurl + np_globals.MusicDownloadurl + id
+        music = requests.get(url, cookies = cookie, verify=np_globals.VerifyPath)
+        getdata = music.json()
         file_url = getdata["data"]["url"]
         if file_url == None:
-            raise Exception("None")
-        catch_location = Catch
-        Music_Login()
-        _music_download = urlopen(file_url, context=unverified)
-        _music_data = _music_download.read()
-        _flac = open(catch_location + id + ".flac", 'wb')
-        _flac.write(_music_data)
+            return False
+        _music_download = requests.get(file_url,cookies = cookie, verify=np_globals.VerifyPath, stream=True)
+        _flac = open(np_globals.Catch + "/" + id + ".flac", 'wb')
+        for chunk in _music_download.iter_content(chunk_size = np_globals.CatchSize):
+            if chunk:
+                _flac.write(chunk)
+        return True
 
-    Music_Download(1860841248)
 
-    
+
+
+label np_emptylabel():
+    pass
+    return

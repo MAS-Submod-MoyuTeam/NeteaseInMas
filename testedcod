@@ -1,0 +1,10 @@
+
+测试登录
+loginurl = "https://netease-cloud-music-api-murex-gamma.vercel.app/login/cellphone?phone=15753515952&password=LOVEcxs2002"
+a = requests.get(loginurl)
+cookie = a.cookies
+musicurl = "https://netease-cloud-music-api-murex-gamma.vercel.app/song/download/url?id=28427883"
+b = requests.get(musicurl, cookies=cookie)
+c = b.json()
+print(c)
+
