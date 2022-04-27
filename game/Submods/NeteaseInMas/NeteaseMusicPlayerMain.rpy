@@ -78,7 +78,7 @@ init 985 python in np_util:
         if result["data"]["profile"] == None:
             return False
         else:
-            return rsult["data"]["profile"]["nickname"]
+            return result["data"]["profile"]["nickname"]
 
     def Music_Logout():
         """
