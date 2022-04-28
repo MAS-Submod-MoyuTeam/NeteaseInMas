@@ -8,13 +8,36 @@ init -990 python:
     store.mas_submod_utils.Submod(
         author="P",
         name="Netease Music",
-        description="在MAS里播放游戏音乐.",
+        description="在MAS里播放来自网易云的音乐.",
         version='0.0.1',
         settings_pane="np_setting_pane"
     )
 
+init -5 python:
+    _np_LoginPhone = ""
+    _np_LoginPw = ""
+    def np_login_ok():
+        result = True
+        if _np_LoginPhone == "" or _np_LoginPw == "":
+            renpy.show_screen("np_message", message = "你忘了一个吧?")
+        else:    
+            np_globals._LoginPhone = _np_LoginPhone
+            np_globals._LoginPw =  _np_LoginPw
+            result = np_util.Music_Login(np_globals._LoginPhone, np_globals._LoginPw)
+        if not result:
+            renpy.show_screen("np_message", message = "登录失败! 是不是账号密码填错了?")
+        renpy.hide_screen("np_login")
+    
+    def np_logout_method():
+        np_util.Music_Logout()
+        renpy.hide_screen("np_logout")
+        
+    def np_initFFmpeg():
+        np_util.Init_FFmpeg()
+        renpy.show_screen("np_message", message = "需要重启{b}电脑{/b}完成初始化")
 
 screen np_setting_pane():
+    $ warn_message = "Netease Music不会将您的密码上传至除我(P)以外的第三者, 且密码上传时使用MD5加密.但请注意, 登录时关闭了证书验证(因为开启就验证失败), 所以仍然有一定的可能性导致被盗号.\n如果真的被盗号, 通常是因为你下了别人发的版本/你的PC上有病毒,MD5没那么好破"
 #    """
 #    Submod菜单:
 #        计划格式:
@@ -30,29 +53,145 @@ screen np_setting_pane():
         xfill True
         style_prefix "check"
 
-        text "- 当前登录:<check>"
+        text "- 当前登录: [np_globals.Np_NickName]"
         text "- 正在播放:<music>"
-        text ""
 
         #> !已登录 ? 登陆账号 : 注销账号
-        if np_util.Music_Login_Status() == False:
+
+        
+        if not np_globals.Np_Status:
             textbutton "> 登录账号":
-                ypos 1
-                selected False
                 action Show("np_login")
         else:
             textbutton "> 注销账号":
-                ypos 1
-                selected False
                 action Show("np_logout")
         
-        textbutton "> 安全性问题说明"
+        textbutton "> 安全性问题说明":
+            action Show("np_message", message = warn_message)
+
 
         textbutton "> 清理歌曲缓存"
 
         if np_globals.debug:
-            textbutton "> debug" 
+            textbutton "> debug":
+                action Show("np_debug")
+        if persistent.Np_InitedFFmpeg != True:
+            textbutton "///{b}第一次使用,请点我初始化服务{/b}///":
+                action Function(np_initFFmpeg)
 
 screen np_login():
-    pass
+    modal True
+    zorder 215
+
+    style_prefix "confirm"
+
+    frame:
+        vbox:
+            xfill False
+            yfill False
+            spacing 5
+            hbox:
+                text "登录系统不是很稳定, 可能需要等待几分钟后再检查. 切勿短时间内反复登录, 可能会导致风控."
+            hbox:
+                text "登陆后, 界面不会实时更新, 您可以切换至其他窗口（如：设置）再切换回来即可更新状态."
+            hbox:
+                text "尽量避免在其他位置登录您的网易云账号:)\n"
+
+            hbox:
+                textbutton "<点击输入手机号>":
+                    action Show("np_login_input",message = "请输入手机号",returnto = "_np_LoginPhone")
+            hbox:
+                textbutton "<点击输入密码>":
+                    action Show("np_login_input",message = "请输入密码",returnto = "_np_LoginPw")
+            hbox:
+                text ""
+            hbox:
+                textbutton "登录":
+                    action Function(np_login_ok)
+                textbutton "关闭":
+                    action Hide("np_login")
+
+
+
+screen np_login_input(message, returnto):
+    ## Ensure other screens do not get input while this screen is displayed.s
+    modal True
+    zorder 225
+
+    style_prefix "confirm"
+
+    frame:
+        vbox:
+            ymaximum 300
+            xmaximum 800
+            xfill True
+            yfill False
+            spacing 5
+
+            label _(message):
+                style "confirm_prompt"
+                xalign 0.5
+            hbox:
+                input default "" value VariableInputValue(returnto) length 64
+
+            hbox:
+                xalign 0.5
+                spacing 100
+
+                textbutton _("OK") action Hide("np_login_input")
+
+screen np_logout():
+    ## Ensure other screens do not get input while this screen is displayed.
+    modal True
+    zorder 225
+
+    style_prefix "confirm"
+
+    frame:
+        vbox:
+            ymaximum 300
+            xmaximum 800
+            xfill True
+            yfill False
+            spacing 5
+
+            hbox:
+                text "你确定要注销账号吗?"
+            hbox:
+                textbutton "确定":
+                    action Function(np_logout_method)
+                textbutton "取消":
+                    action Hide("np_logout")
+
+                
+
+screen np_message(message = "Non Message", ok_action = Hide("np_message")):
+    ## Ensure other screens do not get input while this screen is displayed.
+    modal True
+    zorder 225
+
+    style_prefix "confirm"
+
+    frame:
+        vbox:
+            ymaximum 300
+            xmaximum 800
+            xfill True
+            yfill False
+            spacing 5
+
+            label _(message):
+                style "confirm_prompt"
+                xalign 0.5
+
+            #input default "" value VariableInputValue("savefile") length 25
+
+            hbox:
+                xalign 0.5
+                spacing 100
+
+                textbutton _("OK") action ok_action
+
+
+
 

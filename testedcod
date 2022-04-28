@@ -8,3 +8,9 @@ b = requests.get(musicurl, cookies=cookie)
 c = b.json()
 print(c)
 
+密码加密
+password = "IJustLoveMashiro"
+md5pw = hashlib.md5(password.encode('utf-8'))
+a = requests.get(url)
+a.status_code
+print(md5pw.hexdigest())
