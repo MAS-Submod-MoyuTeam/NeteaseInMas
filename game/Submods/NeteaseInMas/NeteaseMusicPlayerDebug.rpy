@@ -1,4 +1,8 @@
-init -5 python:
+init 999 python:
+    if np_globals.debug:
+        renpy.config.debug = True
+        renpy.config.developer = True
+init -4 python:
     _np_music_id = ""
     def np_debug_check():
         res = np_util.Music_Login_Status()
@@ -30,6 +34,8 @@ init -5 python:
     
     def np_play_music():
         np_util.Music_Play(np_globals.Music_Id)
+    def np_play_music2(id):
+        np_util.Music_Play(id)
 
 
 screen np_debug():
@@ -47,6 +53,10 @@ screen np_debug():
                 text "Nickname:[np_globals.Np_NickName]"
             hbox:
                 text "Music_ID: [np_globals.Music_Id] | _np_music_id: [_np_music_id]"
+            hbox:
+                text "Playing: [np_globals.Music_Name] | music.playing: [renpy.music.get_playing()]"
+            hbox:
+                text "songs.current_track: [songs.current_track] | songs.selected_track: [songs.selected_track] | pers.cur_track: [persistent.current_track]"
 
             hbox:
                 textbutton "立刻检查登陆状态":
@@ -64,6 +74,8 @@ screen np_debug():
                     action Function(np_music_tomp3)
                 textbutton "播放Music_ID.mp3":
                     action Function(np_play_music)
+                textbutton "播放1365873163":
+                    action Function(np_play_music2, id = "1365873163")
             hbox:
                 textbutton "关闭":
                     action Hide("np_debug")
@@ -71,3 +83,21 @@ screen np_debug():
 
 
                     
+init 5 python:
+    if np_globals.debug:
+        addEvent(
+                Event(
+                    persistent.event_database,          
+                    eventlabel="np_play1365873163",        
+                    category=["NP"],                   
+                    prompt="播放1365873163",
+                    pool=True,
+                    unlocked=True
+                )
+            )
+    
+label np_play1365873163:
+    m "ok!"
+    python:
+        np_play_music2("1365873163")
+    return

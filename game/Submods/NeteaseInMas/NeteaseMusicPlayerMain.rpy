@@ -8,7 +8,7 @@
  #不要反复登录 会风控
 
 
-init -5 python in np_globals:
+init 1 python in np_globals:
     import store
     if store.persistent.Np_InitedFFmpeg != True:
         store.persistent.Np_InitedFFmpeg = False
@@ -17,7 +17,7 @@ init -5 python in np_globals:
     Basedir = renpy.config.basedir
     Catch = Basedir + "/game/Submods/NeteaseInMas/Catch"
     FFmpegDir =  Basedir + "/game/Submods/NeteaseInMas/ffmpeg/win32/usr/bin"
-    VerifyPath = False #Basedir + "/game/python-packages/certifi/cacert.pem"
+    VerifyPath = False # Basedir + "/game/python-packages/certifi/cacert.pem"
 
     ######################## API
     Mainurl = "https://netease-cloud-music-api-murex-gamma.vercel.app"
@@ -35,13 +35,30 @@ init -5 python in np_globals:
     SearchLimit = "&limit=10"
     MusicCheck = "/check/music?id="
     MusicDownloadurl = "/song/download/url?id="
+    MusicDetail = "/song/detail?ids="
+    UserPlaylist = "/user/playlist?uid="
+    PlaylistDetain = "/playlist/detail?id="
+    # 歌单内歌曲信息: playlistdetail
+    # dict ["playlist"]["tracks"][num]
+    # 名称 ~[name]
+    # 副标题 ~[alia]
+    ## 查询单曲 MusicDetail
+    # 名称 dict["songs"]["name"]
+    # 作者 dict["songs"]["ar"]["name"]
+    # 副标题 dict["songs"]["alia"]
     ########################
+
+    # 登陆状态/昵称
     Np_Status = False
     Np_NickName = ""
 
+    # 歌曲信息
     Music_Id = ""
     Music_Name = ""
     Music_Author = ""
+    Music_Alia = ""
+
+    # 忘了干什么用
     _LoginPhone = None
     _LoginPw = None
     CatchSize = 2048
@@ -52,13 +69,14 @@ init 985 python in np_util:
     import ssl
     import json
     import requests
-    import renpy
+    #import renpy
     import store
     import hashlib
     import store.np_globals as np_globals
     import FFmpeg, subprocess
     import threading
     import os, sys
+    import store.songs as songs
     class NpThread(threading.Thread):
         def __init__(self, threadID, name, counter):
             threading.Thread.__init__(self)
@@ -167,57 +185,44 @@ init 985 python in np_util:
     def Music_PlusName_Check(dir):
         return ".flac"
 
-    def Music_Play(audio, name=None, loop=True, clear_queue=True, fadein=2):#set_ytm_flag=True
+    def Music_Play(song, fadein=0.0, loop=True, set_per=True, fadeout=0.0, if_changed=False):
+        
         """
-        Plays audio files/data
+        literally just plays a song onto the music channel
+        Also sets the currentt track
         IN:
-            audio - an audio file (can be a list of files too)
-            name - the name of the audio. If None, 'YouTube Music' will be used
-                (Default: None)
-            loop - whether or not we loop this track
+            song - Song to play. If None, the channel is stopped
+            fadein - Number of seconds to fade the song in
+                (Default: 0.0)
+            loop - True if we should loop the song if possible, False to not loop.
                 (Default: True)
-            clear_queue - True clears the queue and play audio, False adds to the the end
-                (Default: True)
-            fadein - fadein for this track in seconds
-                (Default: 2)
-            set_ytm_flag - whether or not we set the flag that youtube music is playing something
-                (Default: True)
-        OUT:
-            True if we were able to play the audio, False otherwise
+            set_per - True if we should set persistent track, False if not
+                (Default: False)
+            fadeout - Number of seconds to fade the song out
+                (Default: 0.0)
+            if_changed - Whether or not to only set the song if it's changing
+                (Use to play the same song again without it being restarted)
+                (Default: False)
         """
-        audio = np_globals.Catch + audio + ".mp3"
-        if clear_queue:
-            renpy.music.stop("music", 2)
-            if name is not None:
-                store.songs.current_track = name
-            else:
-                store.songs.current_track = "Netease Music"
-            store.songs.selected_track = store.songs.FP_NO_SONG
-            store.persistent.current_track = store.songs.FP_NO_SONG
-
-        try:
-            renpy.music.queue(
-                filenames=audio,
-                channel="music",
-                loop=loop,
-                clear_queue=clear_queue,
-                fadein=fadein,
-                tight=False
-            )
-
-        except Exception as e:
-            #writeLog("Failed to play audio.", e)
-            return False
+        if song is None:
+            renpy.music.stop(channel="music", fadeout=fadeout)
 
         else:
-            #ytm_globals.is_playing = set_ytm_flag
-            return True
+            song = (np_globals.Catch + "/" + song + ".mp3").replace("\\","/")
+            renpy.music.play(
+                song,
+                channel="music",
+                loop=loop,
+                synchro_start=True,
+                fadein=fadein,
+                fadeout=fadeout,
+                if_changed=if_changed
+            )
+            songs.current_track = song
+            songs.selected_track = song
 
-        finally:
-            try:
-                store.persistent._seen_audio.pop(audio)
-            except:
-                pass
+        if set_per:
+            store.persistent.current_track = song
 
 
 init 999 python:
