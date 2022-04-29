@@ -113,7 +113,8 @@ screen np_login():
 
 
 
-screen np_login_input(message, returnto):
+screen np_login_input(message, returnto, ok_action = Hide("np_login_input")):
+    #登录输入账户窗口, 也用来用作通用的输入窗口
     ## Ensure other screens do not get input while this screen is displayed.s
     modal True
     zorder 225
@@ -138,7 +139,7 @@ screen np_login_input(message, returnto):
                 xalign 0.5
                 spacing 100
 
-                textbutton _("OK") action Hide("np_login_input")
+                textbutton _("OK") action ok_action
 
 screen np_logout():
     ## Ensure other screens do not get input while this screen is displayed.
@@ -166,6 +167,7 @@ screen np_logout():
                 
 
 screen np_message(message = "Non Message", ok_action = Hide("np_message")):
+    #np通用消息信息
     ## Ensure other screens do not get input while this screen is displayed.
     modal True
     zorder 225

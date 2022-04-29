@@ -7,7 +7,7 @@
  #a为login时的cookies
  #不要反复登录 会风控
 
-default persistent.Np_InitedFFmpeg = False
+
 init -5 python in np_globals:
     import store
     if store.persistent.Np_InitedFFmpeg != True:
@@ -60,21 +60,22 @@ init 985 python in np_util:
     import threading
     import os, sys
     class NpThread(threading.Thread):
-        def __init__(self, threadID, name, counter, id):
+        def __init__(self, threadID, name, counter):
             threading.Thread.__init__(self)
             self.threadID = threadID
             self.name = name
             self.counter = counter
-            self.id = id
+
         def run(self):
-            Music_ToMp3(id)
-    def Music_EncodeMp3(id):
+            Music_ToMp3(np_globals.Music_Id)
+    def Music_EncodeMp3():
         """
-        创建新线程转换MP3
-        id 歌曲id
+        创建新线程转换MP3 X
+        转换Music_Id
         """
-        npthread = NpThread(id, "NpToMp3", 1, id)
-        Music_Id = id
+        #npthread = NpThread(1000, "NpToMp3", 1)
+        #npthread.start()
+        Music_ToMp3()
 
     def Init_FFmpeg():
         """
@@ -84,16 +85,16 @@ init 985 python in np_util:
         subprocess.Popen(addpathcmd)
         store.persistent.Np_InitedFFmpeg == True
 
-    def Music_ToMp3(id):
+    def Music_ToMp3():
         """
         将音频文件转码为MP3
-        Flac 转码的音频
-        return 转码结果放在Catch
+        id 歌曲id
         """
+        id = np_globals.Music_Id
         outdir = np_globals.Catch
-        cmd = "ffmpeg -i {}/{}.flac -ab 320k {}/{}.mp3 -y".format(outdir, id, outdir, id)
-        subprocess.Popen(cmd)
- 
+        cmd = "ffmpeg -i \"{}/{}.flac\" -ab 320k \"{}/{}.mp3\" -y".format(outdir, id, outdir, id)
+        a = subprocess.Popen(cmd)
+
     def Music_Login(phone,pw):
         #登录
         pw = str(pw)
@@ -147,10 +148,12 @@ init 985 python in np_util:
     def Music_Download(id):
         #根据ID下载flac
         cookie = np_globals.Cookies
-        id = str(id)
-        url = np_globals.Mainurl + np_globals.MusicDownloadurl + id
+        url = np_globals.Mainurl + np_globals.MusicDownloadurl + str(id)
         music = requests.get(url, cookies = cookie, verify=np_globals.VerifyPath)
-        getdata = music.json()
+        try:
+            getdata = music.json()
+        except Exception:
+            return False
         file_url = getdata["data"]["url"]
         if file_url == None:
             return False
@@ -164,7 +167,7 @@ init 985 python in np_util:
     def Music_PlusName_Check(dir):
         return ".flac"
 
-    def playAudio(audio, name=None, loop=True, clear_queue=True, fadein=2):#set_ytm_flag=True
+    def Music_Play(audio, name=None, loop=True, clear_queue=True, fadein=2):#set_ytm_flag=True
         """
         Plays audio files/data
         IN:
@@ -182,6 +185,7 @@ init 985 python in np_util:
         OUT:
             True if we were able to play the audio, False otherwise
         """
+        audio = np_globals.Catch + audio + ".mp3"
         if clear_queue:
             renpy.music.stop("music", 2)
             if name is not None:
@@ -202,7 +206,7 @@ init 985 python in np_util:
             )
 
         except Exception as e:
-            writeLog("Failed to play audio.", e)
+            #writeLog("Failed to play audio.", e)
             return False
 
         else:
