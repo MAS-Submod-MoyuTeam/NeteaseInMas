@@ -36,6 +36,9 @@ init -4 python:
         np_util.Music_Play(np_globals.Music_Id)
     def np_play_music2(id):
         np_util.Music_Play(id)
+    
+    def np_check_minfo():
+        np_util.Music_GetDetail()
 
 
 screen np_debug():
@@ -56,7 +59,7 @@ screen np_debug():
             hbox:
                 text "Playing: [np_globals.Music_Name] | music.playing: [renpy.music.get_playing()]"
             hbox:
-                text "songs.current_track: [songs.current_track] | songs.selected_track: [songs.selected_track] | pers.cur_track: [persistent.current_track]"
+                text "Author: [np_globals.Music_Author] | Alia: [np_globals.Music_Alia]"
 
             hbox:
                 textbutton "立刻检查登陆状态":
@@ -76,6 +79,8 @@ screen np_debug():
                     action Function(np_play_music)
                 textbutton "播放1365873163":
                     action Function(np_play_music2, id = "1365873163")
+                textbutton "查询Music_Id的详细信息":
+                    action Function(np_check_minfo)
             hbox:
                 textbutton "关闭":
                     action Hide("np_debug")

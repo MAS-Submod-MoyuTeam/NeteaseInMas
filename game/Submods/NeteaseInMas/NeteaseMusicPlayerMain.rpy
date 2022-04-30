@@ -10,8 +10,6 @@
 
 init 1 python in np_globals:
     import store
-    if store.persistent.Np_InitedFFmpeg != True:
-        store.persistent.Np_InitedFFmpeg = False
     debug = True
 
     Basedir = renpy.config.basedir
@@ -32,7 +30,8 @@ init 1 python in np_globals:
     # 未登录：dict["data"]["profile"] = Null
     
     Search = "/search?keywords="
-    SearchLimit = "&limit=10"
+    SearchLimit = "20"
+    SearchToLimit = "&limit=" + SearchLimit
     MusicCheck = "/check/music?id="
     MusicDownloadurl = "/song/download/url?id="
     MusicDetail = "/song/detail?ids="
@@ -42,6 +41,8 @@ init 1 python in np_globals:
     # dict ["playlist"]["tracks"][num]
     # 名称 ~[name]
     # 副标题 ~[alia]
+    # 作者 ~[ar][name]
+    
     ## 查询单曲 MusicDetail
     # 名称 dict["songs"]["name"]
     # 作者 dict["songs"]["ar"]["name"]
@@ -58,11 +59,16 @@ init 1 python in np_globals:
     Music_Author = ""
     Music_Alia = ""
 
-    # 忘了干什么用
+    Search_Word = ""
+    #搜索结果 -> id, name, artist, alias(如果有), showname
+    Search_List = list()
+    # 其它用处
     _LoginPhone = None
     _LoginPw = None
     CatchSize = 2048
     Cookies = None
+
+    GlobalSubP = None
 
 init 985 python in np_util:
     from urllib import quote
@@ -77,6 +83,7 @@ init 985 python in np_util:
     import threading
     import os, sys
     import store.songs as songs
+    import urllib2
     class NpThread(threading.Thread):
         def __init__(self, threadID, name, counter):
             threading.Thread.__init__(self)
@@ -86,6 +93,52 @@ init 985 python in np_util:
 
         def run(self):
             Music_ToMp3(np_globals.Music_Id)
+
+    def Music_Search(keyword):
+        """
+        搜索歌曲
+        keyword 关键词 
+        修改global的Search_List
+        搜索结果 -> id, name, artist, alias(如果有, 无为空字符串), showname
+        返回 结果list
+        """
+        res = list()
+        keyword = urllib2.quote(keyword.encode('utf-8'))
+        url = np_globals.Mainurl + np_globals.Search + keyword + np_globals.SearchToLimit
+        search = requests.get(url, verify = np_globals.VerifyPath)
+        result = search.json()
+        for song in result["result"]["songs"]:
+            id = song["id"]
+            name = song["name"]
+            artist = song["artists"][0]["name"]
+            try:
+                alias = song["alias"][0]
+            except:
+                alias = ""
+            if alias == "":
+                showname = name + " - " + artist
+            else:
+                showname = name + " - " + alias + " - " + artist
+            res.append([id, name, artist, alias, showname])
+        np_globals.Search_List = res
+        return res
+
+    def Music_GetDetail(id = np_globals.Music_Id):
+        """
+        获取歌曲的详细信息
+        id 获取的歌曲，默认为Music_Id
+        """
+        if id == None or id == "":
+            id = np_globals.Music_Id
+        url = np_globals.Mainurl + np_globals.MusicDetail + id
+        debug_GetUrl = url
+        info = requests.post(url, verify = np_globals.VerifyPath)
+        debug_GetData = info
+        infodata = info.json()
+        np_globals.Music_Name = infodata["songs"][0]["name"]
+        np_globals.Music_Author = infodata["songs"][0]["ar"][0]["name"]
+        np_globals.Music_Alia = infodata["songs"][0]["alia"][0]
+    
     def Music_EncodeMp3():
         """
         创建新线程转换MP3 X

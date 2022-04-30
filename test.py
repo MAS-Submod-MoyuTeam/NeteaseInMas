@@ -1,7 +1,12 @@
+# encoding=UTF-8
 
+import sys   #reload()之前必须要引入模块
+reload(sys)
+sys.setdefaultencoding('utf-8')
 import imp
 import time
 import subprocess
+
 import requests
 import hashlib
 import ffmpeg
@@ -9,50 +14,49 @@ import pydub
 import sys
 import os
 import threading
+import urllib2
+a = "DESIRE".encode('utf-8')
+b = urllib2.quote(a)
 
-#ffmpeg_path = "D:\MAS_Cn001280\Monika After Story\game\Submods\NeteaseInMas\\ffmpeg\win32\usr\\bin"
-#a = os.getenv('path')
-# if a.count(ffmpeg_path):
-#    print("yes")
-# else:
-#    print("no")
-# print(a)
-
-#addpathcmd = "setx \"Path\" \"%Path%;{}\"".format(ffmpeg_path)
-# print(addpathcmd)
-#subprocess.Popen(addpathcmd)
-class NpThread(threading.Thread):
-    def __init__(self, threadID, name, counter):
-        threading.Thread.__init__(self)
-        self.threadID = threadID
-        self.name = name
-        self.counter = counter
-    def run(self):
-        flac_to_mp3()
-def flac_to_mp3():
-    dir = "D:\MAS_Cn001280\Monika After Story\game\Submods\NeteaseInMas\Catch"
-    flac = "\\28581725"
-    cmd = 'ffmpeg -i "{}.flac" -ab 320k "{}" -y'
-    str_cmd = cmd.format(dir + flac, dir+"/28581725.mp3")
-    print(str_cmd)
-    p = subprocess.Popen(str_cmd, shell=True, stdout=subprocess.PIPE)
-    for line in iter(p.stdout.readline, b''):
-        print(line.strip().decode('gbk'))
+search1 = "https://netease-cloud-music-api-murex-gamma.vercel.app/search?keywords={}&limit=20".format(b)
+result = requests.get(search1)
+musicresult = result.json()
+for i in musicresult["result"]["songs"]:
+    print(i["id"])
+    print(i["name"])
+    print(i["artists"][0]["name"])
+    try:
+        print(i["alias"][0])
+    except:
         pass
-    
-
-a = NpThread(1000, "NpToMp3", 1)
-a.start()
-count = 1
-while(a.is_alive()):
-    count = count +1
-    time.sleep(1)
-    if count > 15:
-        print("end")
-        break
-    print(a.is_alive())
-    
+    print("")
 
 
-# ffmpeg -i xxx.flac -ab 320k xxx.mp3 -y'
-# https://www.jianshu.com/p/fec15384029c
+
+
+
+#loginurl = "https://netease-cloud-music-api-murex-gamma.vercel.app/login/cellphone?phone=15753515952&password=LOVEcxs2002"
+#a = requests.get(loginurl)
+#cookie = a.cookies
+#musicurl = "https://netease-cloud-music-api-murex-gamma.vercel.app/song/download/url?id=28427883"
+#b = requests.get(musicurl, cookies=cookie)
+#c = b.json()
+#print(c)
+
+#infourl = "https://netease-cloud-music-api-murex-gamma.vercel.app/song/detail?ids=1365873163"
+#info = requests.post(infourl)
+#
+#infoj = info.json()
+#print(infoj)
+#print(infoj["songs"][0]["name"])
+#print(infoj["songs"][0]["ar"][0]["name"])
+#a = infoj["songs"][0]["alia"][0]
+#print(a)
+#
+
+
+
+
+
+
+

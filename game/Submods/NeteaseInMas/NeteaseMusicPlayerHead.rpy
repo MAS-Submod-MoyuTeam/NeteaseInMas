@@ -54,7 +54,7 @@ screen np_setting_pane():
         style_prefix "check"
 
         text "- 当前登录: [np_globals.Np_NickName]"
-        text "- 正在播放:<music>"
+        text "- 正在播放: [np_globals.Music_Name] | [np_globals.Music_Author]"
 
         #> !已登录 ? 登陆账号 : 注销账号
 
@@ -75,7 +75,7 @@ screen np_setting_pane():
         if np_globals.debug:
             textbutton "> debug":
                 action Show("np_debug")
-        if persistent.Np_InitedFFmpeg != True:
+        if persistent.Np_InitedFFmpeg:
             textbutton "///{b}第一次使用,请点我初始化服务{/b}///":
                 action Function(np_initFFmpeg)
 
@@ -194,6 +194,44 @@ screen np_message(message = "Non Message", ok_action = Hide("np_message")):
 
                 textbutton _("OK") action ok_action
 
+screen scrollable_menu(items, display_area, scroll_align, nvm_text, remove=None):
+    style_prefix "scrollable_menu"
+
+    fixed:
+        area display_area
+
+        vbox:
+            ypos 0
+            yanchor 0
+
+            viewport:
+                id "viewport"
+                yfill False
+                mousewheel True
+
+                vbox:
+                    for i_caption, i_label in items:
+                        textbutton i_caption:
+                            if renpy.has_label(i_label) and not seen_event(i_label):
+                                style "scrollable_menu_new_button"
+
+                            elif not renpy.has_label(i_label):
+                                style "scrollable_menu_special_button"
+
+                            action Return(i_label)
+
+            null height 20
+
+            if remove:
+                # in case we want the option to hide this menu
+                textbutton _(remove[0]) action Return(remove[1])
+
+            textbutton _(nvm_text) action Return(False)
+
+        bar:
+            style "classroom_vscrollbar"
+            value YScrollValue("viewport")
+            xalign scroll_align
 
 
 
