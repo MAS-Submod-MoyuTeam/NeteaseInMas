@@ -9,7 +9,7 @@
 1.确保使用的是最新汉化版本MAS.    
 2.从[Release](https://github.com/PencilMario/NeteaseInMas/releases)处下载最新的版本.    
 3.关闭游戏, 将zip中的文件合并到您的`DDLC`/`MAS_CN001***/Monika After Story`文件夹内, 或者是`DDLC.exe`/`MAS.exe`所在的位置    
-4.可选择安装[Paste](https://github.com/Legendkiller21/MAS-Submods-Paste)（允许在游戏中粘贴链接）和/或[Submod Updater Plugin](https://github.com/Booplicate/MAS-Submods-SubmodUpdaterPlugin)（允许通过游戏内更新程序更新 submods.     
+4.可选择安装[Paste](https://github.com/Legendkiller21/MAS-Submods-Paste)（允许复制粘贴）和/或[Submod Updater Plugin](https://github.com/Booplicate/MAS-Submods-SubmodUpdaterPlugin)（允许通过游戏内更新程序更新 submods.     
 
 如果您正确安装了所有内容, 那么文件夹结构应该是这样的:
 ```
