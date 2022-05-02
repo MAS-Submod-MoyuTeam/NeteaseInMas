@@ -13,7 +13,7 @@ init -4 python:
             str1 = "Login"
         renpy.show_screen("np_message", message = str1)
     def np_fastlogin():
-        np_util.Music_Login(15753515952, "LOVEcxs2002")
+        np_util.Music_Login(nidianniman, "noway")
         renpy.show_screen("np_message", message = "ok")
     def np_fastlogin_fail():
         np_util.Music_Login("31423423", "-1234")
@@ -22,9 +22,9 @@ init -4 python:
         renpy.show_screen("np_login_input", message = "输入下载id", returnto = "_np_music_id", ok_action = Function(np_download_music_p2))
 
     def np_download_music_p2():
-        np_globals.Music_Id = _np_music_id
         renpy.hide_screen("np_login_input")
         if np_util.Music_Download(np_globals.Music_Id):
+            np_globals.Music_Id = _np_music_id
             renpy.show_screen("np_message", message = "ok")
         else:
             renpy.show_screen("np_message", message = "fail")
@@ -93,14 +93,22 @@ init 5 python:
         addEvent(
                 Event(
                     persistent.event_database,          
-                    eventlabel="np_play1365873163",        
+                    eventlabel="np_search",        
                     category=["NP"],                   
-                    prompt="播放1365873163",
                     pool=True,
                     unlocked=True
                 )
             )
-    
+        addEvent(
+                Event(
+                    persistent.event_database,          
+                    eventlabel="np_show_userplaylist",        
+                    category=["NP"],                   
+                    pool=True,
+                    unlocked=True
+                )
+            )
+
 label np_play1365873163:
     m "ok!"
     python:

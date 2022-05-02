@@ -8,7 +8,7 @@
  #不要反复登录 会风控
 
 
-init 1 python in np_globals:
+init -5 python in np_globals:
     import store
     debug = True
 
@@ -36,7 +36,7 @@ init 1 python in np_globals:
     MusicDownloadurl = "/song/download/url?id="
     MusicDetail = "/song/detail?ids="
     UserPlaylist = "/user/playlist?uid="
-    PlaylistDetain = "/playlist/detail?id="
+    PlaylistDetail = "/playlist/detail?id="
     # 歌单内歌曲信息: playlistdetail
     # dict ["playlist"]["tracks"][num]
     # 名称 ~[name]
@@ -51,26 +51,41 @@ init 1 python in np_globals:
 
     # 登陆状态/昵称
     Np_Status = False
+    # 是否使用过
+    Np_Playing = False
     Np_NickName = ""
+    Np_UserId = ""
 
     # 歌曲信息
     Music_Id = ""
     Music_Name = ""
     Music_Author = ""
     Music_Alia = ""
+    Music_Size = 0
+    Music_Type = ""
 
     Search_Word = ""
     #搜索结果 -> id, name, artist, alias(如果有), showname
     Search_List = list()
+    #用户收藏歌单
+    Play_List = list()
     # 其它用处
     _LoginPhone = None
     _LoginPw = None
-    CatchSize = 2048
+    CatchSize = 12000
     Cookies = None
 
     GlobalSubP = None
 
-init 985 python in np_util:
+    # Music menu菜单
+    menu_open = False
+    curr_page = 0
+
+    #UI位置
+    SCR_MENU_AREA = (835, 40, 440, 528)
+    SCR_MENU_XALIGN = -0.05
+
+init python in np_util:
     from urllib import quote
     import ssl
     import json
@@ -84,15 +99,61 @@ init 985 python in np_util:
     import os, sys
     import store.songs as songs
     import urllib2
-    class NpThread(threading.Thread):
-        def __init__(self, threadID, name, counter):
-            threading.Thread.__init__(self)
-            self.threadID = threadID
-            self.name = name
-            self.counter = counter
+    
 
-        def run(self):
-            Music_ToMp3(np_globals.Music_Id)
+    def Get_User_Playlist():
+        """
+        获取用户歌单
+        """
+        cookie = np_globals.Cookies
+        msclist = list()
+
+        id = str(np_globals.Np_UserId)
+        url = np_globals.Mainurl + np_globals.UserPlaylist + id
+        plidr = requests.get(url, cookies = np_globals.Cookies, verify = np_globals.VerifyPath)
+        plidj = plidr.json()
+        plid = str(plidj["playlist"][0]["id"])
+        url2 = np_globals.Mainurl + np_globals.PlaylistDetail + plid
+        getmusiclist = requests.get(url2, cookies = cookie , verify = np_globals.VerifyPath)
+        mlist = getmusiclist.json()
+        for song in mlist['playlist']["tracks"]:
+            id = str(song["id"])
+            name = song["name"]
+            artist = song["ar"][0]["name"]
+            try:
+                alias = str(song["alia"][0])
+            except:
+                alias = ""
+            if alias == "":
+                showname = name + " - " + artist
+            else:
+                showname = name + " - " + alias + " - " + artist
+            showname = showname.replace('[','')
+            showname = showname.replace(']','')
+            showname = showname.replace('{','')
+            showname = showname.replace('}','')
+            msclist.append([id, name, artist, alias, showname])
+
+        np_globals.Play_List = msclist
+
+
+    def Catch_size(path = np_globals.Catch):
+        """
+        网上的代码 检测占用空间
+        """
+        total_size=0
+        path=os.path.abspath(path)
+        file_list=os.listdir(path)
+        for i in file_list:
+            i_path = os.path.join(path, i)
+            if os.path.isfile(i_path):
+                total_size += os.path.getsize(i_path)
+            else:
+                try:
+                    file_size(i_path)
+                except RecursionError:
+                    print('递归操作时超出最大界限')
+        return total_size
 
     def Music_Search(keyword):
         """
@@ -108,7 +169,7 @@ init 985 python in np_util:
         search = requests.get(url, verify = np_globals.VerifyPath)
         result = search.json()
         for song in result["result"]["songs"]:
-            id = song["id"]
+            id = str(song["id"])
             name = song["name"]
             artist = song["artists"][0]["name"]
             try:
@@ -119,6 +180,10 @@ init 985 python in np_util:
                 showname = name + " - " + artist
             else:
                 showname = name + " - " + alias + " - " + artist
+            showname = showname.replace('[','')
+            showname = showname.replace(']','')
+            showname = showname.replace('{','')
+            showname = showname.replace('}','')
             res.append([id, name, artist, alias, showname])
         np_globals.Search_List = res
         return res
@@ -129,7 +194,7 @@ init 985 python in np_util:
         id 获取的歌曲，默认为Music_Id
         """
         if id == None or id == "":
-            id = np_globals.Music_Id
+            id = str(np_globals.Music_Id)
         url = np_globals.Mainurl + np_globals.MusicDetail + id
         debug_GetUrl = url
         info = requests.post(url, verify = np_globals.VerifyPath)
@@ -137,7 +202,10 @@ init 985 python in np_util:
         infodata = info.json()
         np_globals.Music_Name = infodata["songs"][0]["name"]
         np_globals.Music_Author = infodata["songs"][0]["ar"][0]["name"]
-        np_globals.Music_Alia = infodata["songs"][0]["alia"][0]
+        try:
+            np_globals.Music_Alia = infodata["songs"][0]["alia"][0]
+        except:
+            np_globals.Music_Alia = ""
     
     def Music_EncodeMp3():
         """
@@ -197,9 +265,11 @@ init 985 python in np_util:
         if result["data"]["profile"] == None:
             np_globals.Np_Status = False
             np_globals.Np_NickName = "Unlogin - 未登录"
+            np_globals.Np_UserId = ""
         else:
             np_globals.Np_Status = True
             np_globals.Np_NickName = result["data"]["profile"]["nickname"]
+            np_globals.Np_UserId = result["data"]["profile"]["userId"]
         return np_globals.Np_Status
 
     def Music_Logout():
@@ -218,14 +288,17 @@ init 985 python in np_util:
 
     def Music_Download(id):
         #根据ID下载flac
+        id = str(id)
         cookie = np_globals.Cookies
-        url = np_globals.Mainurl + np_globals.MusicDownloadurl + str(id)
+        url = np_globals.Mainurl + np_globals.MusicDownloadurl + id
         music = requests.get(url, cookies = cookie, verify=np_globals.VerifyPath)
         try:
             getdata = music.json()
         except Exception:
             return False
         file_url = getdata["data"]["url"]
+        np_globals.Music_Size = getdata['data']['size']
+        np_globals.Music_Type = getdata['data']['type']
         if file_url == None:
             return False
         _music_download = requests.get(file_url,cookies = cookie, verify=np_globals.VerifyPath, stream=True)
@@ -235,10 +308,30 @@ init 985 python in np_util:
                 _flac.write(chunk)
         return True
     
-    def Music_PlusName_Check(dir):
-        return ".flac"
+    def Music_Check(dir):
+        url = np_globals.Mainurl + np_globals.MusicCheck + np_globals.Music_Id
+        res = requests.get(url, verify = np_globals.VerifyPath)
+        r = res.json()
+        return r['success']
+        return 
 
-    def Music_Play(song, fadein=0.0, loop=True, set_per=True, fadeout=0.0, if_changed=False):
+    def Music_Deleteflac():
+        dirs = os.listdir(np_globals.Catch)
+        for file_name in dirs:
+            if file_name.find('flac') != -1:
+                file = np_globals.Catch + "/" + file_name
+                os.remove(file)
+
+    def Music_DeleteCatch():
+        dirs = os.listdir(np_globals.Catch)
+        for file_name in dirs:
+            if True:
+                file = np_globals.Catch + "/" + file_name
+                os.remove(file)
+
+    def Music_Play(song, fadein=1.2, loop=True, set_per=True, fadeout=1.2, if_changed=False):
+        Music_Deleteflac()
+        song = str(song)
         
         """
         literally just plays a song onto the music channel
@@ -276,10 +369,58 @@ init 985 python in np_util:
 
         if set_per:
             store.persistent.current_track = song
+        np_globals.Np_Playing = True
 
+init python in np_screen_util:
+    import store
+
+    class NpInputValue(store.InputValue):
+        """
+        Our subclass of InputValue for internal use
+        Allows us to manipulate the user input
+        For more info read renpy docs (haha yeah...docs...renpy...)
+        """
+        def __init__(self):
+            self.default = True
+            self.input_value = ""
+            self.editable = True
+            self.returnable = True
+    
+        def get_text(self):
+            return self.input_value
+    
+        def set_text(self, s):
+            if not isinstance(s, basestring):
+                s = unicode(s)
+            self.input_value = s
+
+    #def toggleChildScreenAnimation(new_value):
+    #"""
+    #This allows us to hide the sub-menu w/o animation
+    #when we need it to just disappear immediately
+    #IN:
+    #    new_value - a bool to switch the setting
+    #"""
+    #_screen = renpy.get_screen("ytm_history_submenu")
+    #if _screen:
+    #    _settings = _screen.scope.get("settings", None)
+    #    if _settings:
+    #        _settings["animate"] = new_value
+
+    def setParentInputValue(new_input):
+        """
+        A wrapper which allows us to do the magic in local env
+        IN:
+            new_input - a new value for input
+        """
+        _screen = renpy.get_screen("np_input_screen")
+        if _screen:
+            np_input = _screen.scope.get("np_input", None)
+            if np_input:
+                np.set_text(new_input)
 
 init 999 python:
-    np_util.Cookies = persistent.np_Cookie
+    np_globals.Cookies = persistent.np_Cookie
     np_util.Music_Login_Status()
 
 label np_emptylabel():
