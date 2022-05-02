@@ -70,14 +70,20 @@ label np_play_musicid:
             m "好了~{nw}"
             python:
                 if np_globals.Music_Type == "mp3":
-                    speed = 4500
+                    speed = 4500.0
                 else:
-                    speed = 2750
-                wtime = np_globals.Music_Size // 1024 // speed
+                    speed = 3250.0
+                wtime = np_globals.Music_Size / 1024 / speed
                 if wtime > 20:
                     wtime = 20
                 elif wtime < 8:
                     wtime = 8
+            
+            if np_globals.debug:
+                m "预计时间:[wtime]{nw}"
+            $ np_util.Music_EncodeMp3()
+            m "接下来...等音乐转码完就好了...{w=[wtime]}{nw}"
+            call mas_timed_text_events_wrapup
             python:
                 import time
                 playable = False
@@ -85,24 +91,20 @@ label np_play_musicid:
                 FAILED = False
                 while not playable:
                     try:
-                        np_util.Music_EncodeMp3()
+                        np_util.Music_Play(np_globals.Music_Id)
                         playable = True
                     except:
-                        retry = retry + 1 
+                        retry = retry + 1
                         platable = False
                         time.sleep(1.5)
                         if retry > 7:
-                            renpy.say(m, "出了点问题, 我没法播放这个文件...{w=0.7}{nw}")
                             FAILED = True
+                            break
+                        renpy.say(m, "第[retry]次重试...")
             if FAILED:
+                m "出了点问题...我没法播放这首歌..."
                 return
-            if np_globals.debug:
-                m "预计时间:[wtime]{nw}"
-            
-            m "接下来...等音乐转码完就好了...{w=[wtime]}{nw}"
         $ np_util.Music_GetDetail()
-        call mas_timed_text_events_wrapup
-        $ np_util.Music_Play(np_globals.Music_Id)
         m "搞定{w=3}{nw}"
         python:
             egglabel = np_check_eggs(np_globals.Music_Name)
