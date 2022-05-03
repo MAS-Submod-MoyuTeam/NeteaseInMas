@@ -105,7 +105,6 @@ label np_play_musicid:
                     playable = True
                 except:
                     retry = retry + 1
-                    platable = False
                     time.sleep(1.5)
                     if retry > 7:
                         FAILED = True
