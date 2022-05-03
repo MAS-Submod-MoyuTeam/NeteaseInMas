@@ -152,7 +152,7 @@ init python in np_util:
                 try:
                     file_size(i_path)
                 except RecursionError:
-                    print('递归操作时超出最大界限')
+                    raise Exception('递归操作时超出最大界限')
         return total_size
 
     def Music_Search(keyword):
@@ -244,15 +244,14 @@ init python in np_util:
         store.persistent.np_Cookie = login.cookies
         Music_Login_Status()
         return np_globals.Np_Status
-
+ 
     def Music_Login_Refresh():
         #刷新登录
-        #url = Mainurl + RefreshLogin
-        #refresh = requests.get(url, cookies=np_globals.Cookie, verify = VerifyPath)
-        #new_cookies_dict = refresh.json()
-        #new_cookies = requests.util.cookiejar_from_dict(new_cookies_dict["cookie"])
-        #np_globals.Cookie = new_cookies
-        return False
+        url = np_globals.Mainurl + np_globals.RefreshLogin
+        refresh = requests.get(url, cookies=np_globals.Cookies, verify = np_globals.VerifyPath)
+        new_cookies = refresh.cookies
+        np_globals.Cookies = new_cookies
+        store.persistent.np_Cookie = new_cookies
     
     def Music_Login_Status():
         """
@@ -280,7 +279,7 @@ init python in np_util:
         url = np_globals.Mainurl + np_globals.Logout
         requests.get(url, cookies = cookie, verify = np_globals.VerifyPath)
         np_globals.Cookies = None
-        np_globals.Np_NickName = "Unlogin"
+        np_globals.Np_NickName = "Unlogin-未登录"
         np_globals.Np_Status = False
         store.persistent.np_Cookie = None
         #renpy.jump("np_emptylabel")
@@ -308,12 +307,15 @@ init python in np_util:
                 _flac.write(chunk)
         return True
     
-    def Music_Check(dir):
+    def Music_Check():
+        """
+        检测歌曲是否可用
+        返回bool
+        """
         url = np_globals.Mainurl + np_globals.MusicCheck + np_globals.Music_Id
         res = requests.get(url, verify = np_globals.VerifyPath)
         r = res.json()
         return r['success']
-        return 
 
     def Music_Deleteflac():
         dirs = os.listdir(np_globals.Catch)

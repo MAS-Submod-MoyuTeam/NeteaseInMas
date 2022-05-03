@@ -58,16 +58,26 @@ label np_menu_display:
 label np_play_musicid:
     python:
         catched = False
+    #if not np_util.Music_Check():
+    #    m "这首歌...网易云没版权了..."
+    #    m "换一首吧~"
+    #    return
     if np_globals.Np_Status: 
-        call mas_timed_text_events_prep
+        call np_timed_text_events_prep
         m "等我下好这个歌...{nw}"
         python:
             import os
             if os.path.exists(np_globals.Catch + "/" + np_globals.Music_Id + ".mp3"):
                 catched = True
         if not catched:
-            $ np_util.Music_Download(np_globals.Music_Id)
-            m "好了~{nw}"
+            $ res = np_util.Music_Download(np_globals.Music_Id)
+            if res:
+                m "好了~{w=0.2}{nw}"
+            else:
+                m "这首歌我下不了, [player].{w=1.2}{nw}"
+                m "多半是因为网易云没有版权, 换一首吧.{w=1.2}{nw}"
+                call np_timed_text_events_wrapup
+                return
             python:
                 if np_globals.Music_Type == "mp3":
                     speed = 4500.0
@@ -83,27 +93,29 @@ label np_play_musicid:
                 m "预计时间:[wtime]{nw}"
             $ np_util.Music_EncodeMp3()
             m "接下来...等音乐转码完就好了...{w=[wtime]}{nw}"
-            call mas_timed_text_events_wrapup
-            python:
-                import time
-                playable = False
-                retry = 0
-                FAILED = False
-                while not playable:
-                    try:
-                        np_util.Music_Play(np_globals.Music_Id)
-                        playable = True
-                    except:
-                        retry = retry + 1
-                        platable = False
-                        time.sleep(1.5)
-                        if retry > 7:
-                            FAILED = True
-                            break
-                        renpy.say(m, "第[retry]次重试...")
-            if FAILED:
-                m "出了点问题...我没法播放这首歌..."
-                return
+            
+        python:
+            import time
+            playable = False
+            retry = 0
+            FAILED = False
+            while not playable:
+                try:
+                    np_util.Music_Play(np_globals.Music_Id)
+                    playable = True
+                except:
+                    retry = retry + 1
+                    platable = False
+                    time.sleep(1.5)
+                    if retry > 7:
+                        FAILED = True
+                        break
+                    renpy.say(m, "第[retry]次重试...{nw}")
+        if FAILED:
+            call np_timed_text_events_wrapup
+            m "出了点问题...我没法播放这首歌..."
+            return
+        call np_timed_text_events_wrapup
         $ np_util.Music_GetDetail()
         m "搞定{w=3}{nw}"
         python:
@@ -160,4 +172,30 @@ label np_show_userplaylist:
     $ np_globals.Music_Id = _return
     #m "call np_play_musicid{nw}"
     call np_play_musicid
+    return
+
+
+label np_timed_text_events_prep:
+    python:
+        renpy.pause(0.5)
+
+        # raise shield
+        mas_RaiseShield_timedtext()
+
+        # store and disable auto-forward pref
+        afm_pref = renpy.game.preferences.afm_enable
+        renpy.game.preferences.afm_enable = False
+
+    return
+
+label np_timed_text_events_wrapup:
+    python:
+        renpy.pause(0.5)
+
+        # drop shield
+        mas_DropShield_timedtext()
+
+        # restor auto-forward pref
+        renpy.game.preferences.afm_enable = afm_pref
+
     return
