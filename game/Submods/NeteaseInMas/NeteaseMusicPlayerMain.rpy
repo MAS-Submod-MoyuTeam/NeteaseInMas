@@ -10,7 +10,7 @@
 
 init -5 python in np_globals:
     import store
-    debug = True
+    debug = False
 
     Basedir = renpy.config.basedir
     Catch = Basedir + "/game/Submods/NeteaseInMas/Catch"
@@ -196,9 +196,7 @@ init python in np_util:
         if id == None or id == "":
             id = str(np_globals.Music_Id)
         url = np_globals.Mainurl + np_globals.MusicDetail + id
-        debug_GetUrl = url
         info = requests.post(url, verify = np_globals.VerifyPath)
-        debug_GetData = info
         infodata = info.json()
         np_globals.Music_Name = infodata["songs"][0]["name"]
         np_globals.Music_Author = infodata["songs"][0]["ar"][0]["name"]
