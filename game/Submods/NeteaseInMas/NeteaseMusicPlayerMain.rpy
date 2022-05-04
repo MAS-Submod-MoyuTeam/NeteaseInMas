@@ -10,7 +10,7 @@
 
 init -5 python in np_globals:
     import store
-    debug = False
+    debug = True
 
     Basedir = renpy.config.basedir
     Catch = Basedir + "/game/Submods/NeteaseInMas/Catch"
@@ -100,6 +100,10 @@ init python in np_util:
     import store.songs as songs
     import urllib2
     
+    def Check_FFmpeg_init():
+        a = os.getenv('Path')
+        if a.find(np_globals.FFmpegDir) == -1:
+            store.persistent.Np_InitedFFmpeg = False
 
     def Get_User_Playlist():
         """
@@ -420,6 +424,7 @@ init python in np_screen_util:
                 np.set_text(new_input)
 
 init 999 python:
+    np_util.Check_FFmpeg_init()
     np_globals.Cookies = persistent.np_Cookie
     np_util.Music_Login_Status()
 

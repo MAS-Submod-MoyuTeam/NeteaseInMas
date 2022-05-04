@@ -49,6 +49,10 @@ label np_menu_display:
             jump np_search
         else:
             m 1hua "好~{w=1}{nw}"
+            if not np_globals.Np_Status:
+                m 3rksdra "呃...我们好像忘记登录了..."
+                m 3hksdrb "去设置里登录一下吧, [player]."
+                return
             $ np_globals.Music_Id = _return
             call np_play_musicid
     else:
@@ -56,6 +60,10 @@ label np_menu_display:
         m 3rub "我什么都没找到, 要不我们换一首?" 
     return
 label np_play_musicid:
+    if not persistent.Np_InitedFFmpeg:
+        m 1lksdla "呃...[player]."
+        m 1lksdlb "你忘记初始化子模组了..."
+        return
     python:
         catched = False
     #if not np_util.Music_Check():
