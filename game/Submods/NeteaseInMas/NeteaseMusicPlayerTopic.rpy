@@ -60,10 +60,6 @@ label np_menu_display:
         m 3rub "我什么都没找到, 要不我们换一首?" 
     return
 label np_play_musicid:
-    if not persistent.Np_InitedFFmpeg:
-        m 1lksdla "呃...[player]."
-        m 1lksdlb "你忘记初始化子模组了..."
-        return
     python:
         catched = False
     #if not np_util.Music_Check():
