@@ -10,7 +10,7 @@
 
 init -5 python in np_globals:
     import store
-    debug = True
+    debug = False
 
     Basedir = renpy.config.basedir
     Catch = Basedir + "/game/Submods/NeteaseInMas/Catch"
