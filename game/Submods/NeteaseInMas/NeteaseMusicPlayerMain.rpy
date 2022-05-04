@@ -427,6 +427,10 @@ init 999 python:
     np_util.Check_FFmpeg_init()
     np_globals.Cookies = persistent.np_Cookie
     np_util.Music_Login_Status()
+    try:
+        os.mkdir(np_globals.Catch)
+    except:
+        pass
 
 label np_emptylabel():
     pass
