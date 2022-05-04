@@ -100,7 +100,7 @@ screen np_setting_pane():
         if np_globals.debug:
             textbutton "> debug":
                 action Show("np_debug")
-        if persistent.Np_InitedFFmpeg:
+        if not persistent.Np_InitedFFmpeg:
             textbutton "///{b}第一次使用,请点我初始化服务{/b}///":
                 action Function(np_initFFmpeg)
 

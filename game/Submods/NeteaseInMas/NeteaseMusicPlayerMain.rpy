@@ -104,6 +104,8 @@ init python in np_util:
         a = os.getenv('Path')
         if a.find(np_globals.FFmpegDir) == -1:
             store.persistent.Np_InitedFFmpeg = False
+        else:
+            store.persistent.Np_InitedFFmpeg = True
 
     def Get_User_Playlist():
         """
