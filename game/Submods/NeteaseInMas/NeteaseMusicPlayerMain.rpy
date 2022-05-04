@@ -426,7 +426,6 @@ init python in np_screen_util:
                 np.set_text(new_input)
 
 init 999 python:
-    np_util.Check_FFmpeg_init()
     np_globals.Cookies = persistent.np_Cookie
     np_util.Music_Login_Status()
     try:

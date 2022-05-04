@@ -9,7 +9,7 @@ init -990 python:
         author="P",
         name="Netease Music",
         description="在MAS里播放来自网易云的音乐.\n强烈建议使用{a=https://github.com/Legendkiller21/MAS-Submods-Paste}{i}{u}Paste{/u}{/i}{/a}子模组来进行复制粘贴操作。",
-        version='1.2.2',
+        version='1.2.3',
         settings_pane="np_setting_pane"
     )
 
@@ -100,9 +100,8 @@ screen np_setting_pane():
         if np_globals.debug:
             textbutton "> debug":
                 action Show("np_debug")
-        if not persistent.Np_InitedFFmpeg:
-            textbutton "///{b}第一次使用,请点我初始化服务{/b}///":
-                action Function(np_initFFmpeg)
+        textbutton "> 请务必点我初始化服务!":
+            action Function(np_initFFmpeg)
 
 screen np_login():
     modal True
