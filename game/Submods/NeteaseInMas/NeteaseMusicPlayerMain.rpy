@@ -94,7 +94,7 @@ init python in np_util:
     import store
     import hashlib
     import store.np_globals as np_globals
-    import FFmpeg, subprocess
+    import subprocess
     import threading
     import os, sys
     import store.songs as songs
