@@ -265,6 +265,13 @@ init python in np_util:
         url = np_globals.Mainurl + np_globals.LoginStatus
         check = requests.get(url, cookies = cookie, verify = np_globals.VerifyPath)
         result = check.json()
+        try:
+            profile = result["data"]["profile"]
+        except:
+            np_globals.Np_Status = False
+            np_globals.Np_NickName = "Unlogin - 未登录"
+            np_globals.Np_UserId = ""
+            return np_globals.Np_Status
         if result["data"]["profile"] == None:
             np_globals.Np_Status = False
             np_globals.Np_NickName = "Unlogin - 未登录"
@@ -283,7 +290,7 @@ init python in np_util:
         url = np_globals.Mainurl + np_globals.Logout
         requests.get(url, cookies = cookie, verify = np_globals.VerifyPath)
         np_globals.Cookies = None
-        np_globals.Np_NickName = "Unlogin-未登录"
+        np_globals.Np_NickName = "Unlogin - 未登录"
         np_globals.Np_Status = False
         store.persistent.np_Cookie = None
         #renpy.jump("np_emptylabel")
