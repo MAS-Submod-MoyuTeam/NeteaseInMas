@@ -9,7 +9,7 @@ init -990 python:
         author="P",
         name="Netease Music",
         description="在MAS里播放来自网易云的音乐.\n强烈建议使用{a=https://github.com/Legendkiller21/MAS-Submods-Paste}{i}{u}Paste{/u}{/i}{/a}子模组来进行复制粘贴操作。",
-        version='1.2.4',
+        version='1.2.5',
         settings_pane="np_setting_pane"
     )
 
@@ -100,8 +100,8 @@ screen np_setting_pane():
         if np_globals.debug:
             textbutton "> debug":
                 action Show("np_debug")
-        textbutton "> 请务必点我初始化服务!":
-            action Function(np_initFFmpeg)
+        #textbutton "> 请务必点我初始化服务!":
+        #    action Function(np_initFFmpeg)
 
 screen np_login():
     modal True
@@ -115,11 +115,11 @@ screen np_login():
             yfill False
             spacing 5
             hbox:
-                text "登录系统不是很稳定, 可能需要等待几分钟后再检查. 切勿短时间内反复登录, 可能会导致风控."
+                text "由于服务端API缓存系统, 需要等待2分钟左右等待状态刷新."
             hbox:
                 text "登录后, 可能会显示登陆失败, 如果账户密码正确只需要等待2分钟再刷新即可."
             hbox:
-                text "尽量避免在其他位置登录您的网易云账号:)\n"
+                text "尽量避免在其他位置登录您的网易云账号, 切勿反复登录:)\n"
 
             hbox:
                 textbutton "<点击输入手机号>":

@@ -15,6 +15,7 @@ init -5 python in np_globals:
     Basedir = renpy.config.basedir
     Catch = Basedir + "/game/Submods/NeteaseInMas/Catch"
     FFmpegDir =  Basedir + "/game/Submods/NeteaseInMas/ffmpeg/win32/usr/bin"
+    FFmpegexe = FFmpegDir + "/ffmpeg"
     VerifyPath = False # Basedir + "/game/python-packages/certifi/cacert.pem"
 
     ######################## API
@@ -235,7 +236,7 @@ init python in np_util:
         """
         id = np_globals.Music_Id
         outdir = np_globals.Catch
-        cmd = "ffmpeg -i \"{}/{}.flac\" -ab 320k \"{}/{}.mp3\" -y".format(outdir, id, outdir, id)
+        cmd = "\"{}\" -i \"{}/{}.flac\" -ab 320k \"{}/{}.mp3\" -y".format(np_globals.FFmpegexe, outdir, id, outdir, id)
         a = subprocess.Popen(cmd)
 
     def Music_Login(phone,pw):
@@ -244,6 +245,14 @@ init python in np_util:
         md5pw = hashlib.md5(pw.encode('utf-8'))
         url = np_globals.Mainurl + np_globals.PhoneLogin + str(phone) + np_globals.PhoneLoginPwMd5 + md5pw.hexdigest()
         login = requests.get(url, verify=np_globals.VerifyPath)
+        loginjson = login.json()
+        failmessage = ""
+        try:
+            failmessage = loginjson["message"]
+        except:
+            pass
+        if failmessage == "当前登录存在安全风险，请稍后再试":
+            raise Exception("API可能已被风控, 请更换API或尝试更新你fork的网易云音乐存储库")
         np_globals.Cookies = login.cookies
         store.persistent.np_Cookie = login.cookies
         Music_Login_Status()

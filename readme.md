@@ -41,16 +41,27 @@ DDLC/
         **requests需要的其它库文件**
 ```
 
-## 使用方法 
-1.打开MAS, 进入设置-子模组-NeteaseInMas, 进行初始化.    
-2.同样在这个位置, 登录您的网易云手机号和密码(不支持短信验证码)    
-3.如果确保账密正确, 仍然无法登录, 请等待两分钟点击强制刷新登录(不是登录)    
-4.所有话题都在`嘿, 莫妮卡-Netease Music`内.    
+## 使用方法  
+
+0.参照`使用方法.docx`, 创建你自己的网易云音乐API（这非必须，但很重要！）
+1.打开MAS, 进入设置-子模组.  
+2.找到NeteaseInMas, 登录您的网易云手机号和密码(不支持短信验证码)  
+3.如果确保账密正确, 仍然无法登录, 请等待两分钟点击强制刷新登录(不是登录)  
+4.所有话题都在`嘿, 莫妮卡-Netease Music`内.  
+
+> NeteaseInMas 将于 MAS 更新至 1.2.9 后不再提供默认API
+
+## 提示
+
+* 本子模组无法播放版权音乐(需要黑胶VIP)和无版权音乐(网易云无版权), 会提示下载失败
+* 安装如果冲突, 替换与否都可、
+* 提示风控时，请参考`使用方法.docs`更新你的API
 
 ## 特别感谢
-[NeteaseCloudMusicApi](https://github.com/Binaryify/NeteaseCloudMusicApi) 本子模组使用的API, 没有这个就没有本子模组.        
-[YoutubeMusic](https://github.com/Booplicate/MAS-Submods-YouTubeMusic) 本模组部分代码参考了YM的设计.     
-[MonikaAfterStory](https://github.com/Monika-After-Story/MonikaModDev) 本模组部分代码参考了MAS的设计.     
+[NeteaseCloudMusicApi](https://github.com/Binaryify/NeteaseCloudMusicApi) 本子模组使用的API, 没有这个就没有本子模组.  
+[YoutubeMusic](https://github.com/Booplicate/MAS-Submods-YouTubeMusic) 本模组部分代码参考了YM的设计.  
+[MonikaAfterStory](https://github.com/Monika-After-Story/MonikaModDev) 本模组部分代码参考了MAS的设计.  
 
-星光 - 彩蛋设计    
-洛尔 - 演出编辑    
+星光 - 彩蛋设计  
+
+洛尔 - 演出编辑  
