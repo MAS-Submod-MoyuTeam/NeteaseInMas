@@ -1,8 +1,10 @@
 # NeteaseinMas
 内置于Monika After Story的网易云音乐播放器。
 
-***注意:只支持Windows 可能不兼容Youtube Music和Night Music***
-
+***注意:只支持Windows 可能不兼容Youtube Music和Night Music***      
+> 本子模组并不能播放网易云本来就没版权的音乐     
+> 如果你没有黑胶vip，那么部分需要版权的音乐也无法播放   
+> 以上情况都会提示下载失败   
 
 ## 安装
 
@@ -10,6 +12,8 @@
 2.从[Release](https://github.com/PencilMario/NeteaseInMas/releases)处下载最新的版本.    
 3.关闭游戏, 将zip中的文件合并到您的`DDLC`/`MAS_CN001***/Monika After Story`文件夹内, 或者是`DDLC.exe`/`MAS.exe`所在的位置    
 4.可选择安装[Paste](https://github.com/Legendkiller21/MAS-Submods-Paste)（允许复制粘贴）和/或[Submod Updater Plugin](https://github.com/Booplicate/MAS-Submods-SubmodUpdaterPlugin)（允许通过游戏内更新程序更新 submods.     
+5.(可选项, 但强烈建议) 根据`使用方法.docx`创建属于你自己的网易云音乐API。
+> ***如果这一步不做，你会与别人共用一个API, 性质相当于你与别人共用一个网易云音乐客户端, 可能有风控风险。***
 
 如果您正确安装了所有内容, 那么文件夹结构应该是这样的:
 ```
@@ -63,5 +67,4 @@ DDLC/
 [MonikaAfterStory](https://github.com/Monika-After-Story/MonikaModDev) 本模组部分代码参考了MAS的设计.  
 
 星光 - 彩蛋设计  
-
 洛尔 - 演出编辑  
