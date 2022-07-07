@@ -13,7 +13,8 @@
 3.关闭游戏, 将zip中的文件合并到您的`DDLC`/`MAS_CN001***/Monika After Story`文件夹内, 或者是`DDLC.exe`/`MAS.exe`所在的位置    
 4.可选择安装[Paste](https://github.com/Legendkiller21/MAS-Submods-Paste)（允许复制粘贴）和/或[Submod Updater Plugin](https://github.com/Booplicate/MAS-Submods-SubmodUpdaterPlugin)（允许通过游戏内更新程序更新 submods.     
 5.(可选项, 但强烈建议) 根据`使用方法.docx`创建属于你自己的网易云音乐API。
-> ***如果这一步不做，你会与别人共用一个API, 性质相当于你与别人共用一个网易云音乐客户端, 可能有风控风险。***
+> ***如果这一步不做，你会与别人共用一个API, 性质相当于你与别人共用一个网易云音乐客户端。***
+> ***为了安全性，使用默认API时，不允许登录账号，部分功能会受到限制***
 
 如果您正确安装了所有内容, 那么文件夹结构应该是这样的:
 ```
