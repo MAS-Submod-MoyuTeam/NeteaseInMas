@@ -229,7 +229,7 @@ label np_show_setting:
                     $ persistent._np_playmode = NP_DOWNMODE2
         "搜索结果数":
             "决定了搜索歌曲返回的结果数量"
-            persistent._NP_search_limit = Int(mas_input("输入非数字可能会导致异常, 当前为[persistent._NP_search_limit]"))
+            persistent._NP_search_limit = int(mas_input("输入非数字可能会导致异常, 当前为[persistent._NP_search_limit]"))
     
     "设置完成"
     return
