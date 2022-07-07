@@ -24,25 +24,25 @@ DDLC/
         python-packages/
             requests/
                 **requests库文件**
-            Submods/NeteaseInMas/
-                Catch/
-                    **缓存文件夹**
-                ffmpeg/
-                    **ffmpeg程序, 转码需要用到**
-                NeteaseMusicPlayerDebug.rpy 
-                    **测试用脚本**
-                NeteaseMusicPlayerEggs.rpy
-                    **歌名彩蛋**
-                NeteaseMusicPlayerHead.rpy
-                    **子模组定义界面的脚本文件**
-                NeteaseMusicPlayerMain.rpy
-                    **子模组定义方法, 全局变量等的脚本文件**
-                NeteaseMusicPlayerOverwrite.rpy
-                    **子模组重写原MAS脚本内容，用于额外功能按钮**
-                NeteaseMusicPlayerThreading.rpy
-                    **子模组Threading文件, 似乎也可以删**
-                NeteaseMusicPlayerTopic.rpy
-                    **子模组定义整个操作流程的文件**
+        Submods/NeteaseInMas/
+            Catch/
+                **缓存文件夹**
+            ffmpeg/
+                **ffmpeg程序, 转码需要用到**
+            NeteaseMusicPlayerDebug.rpy 
+                **测试用脚本**
+            NeteaseMusicPlayerEggs.rpy
+                **歌名彩蛋**
+            NeteaseMusicPlayerHead.rpy
+                **子模组定义界面的脚本文件**
+            NeteaseMusicPlayerMain.rpy
+                **子模组定义方法, 全局变量等的脚本文件**
+            NeteaseMusicPlayerOverwrite.rpy
+                **子模组重写原MAS脚本内容，用于额外功能按钮**
+            NeteaseMusicPlayerThreading.rpy
+                **子模组Threading文件, 似乎也可以删**
+            NeteaseMusicPlayerTopic.rpy
+                **子模组定义整个操作流程的文件**
     lib/windows-i686/Lib/
         **requests需要的其它库文件**
 ```
