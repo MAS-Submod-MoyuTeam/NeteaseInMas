@@ -4,14 +4,14 @@
 #            - 刷新登录缓存 X - 无法实现
 #            - 正在播放
 #            - 清除下载歌曲
-define default_np_api = "https://netease-cloud-music-api-murex-gamma.vercel.app"
+define DEFAULT_NP_API = "https://netease-cloud-music-api-murex-gamma.vercel.app"
 
 init -990 python:
     store.mas_submod_utils.Submod(
         author="P",
         name="Netease Music",
         description="在MAS里播放来自网易云的音乐.\n强烈建议使用{a=https://github.com/Legendkiller21/MAS-Submods-Paste}{i}{u}Paste{/u}{/i}{/a}子模组来进行复制粘贴操作。",
-        version='1.2.6',
+        version='1.2.7',
         settings_pane="np_setting_pane"
     )
 
@@ -81,18 +81,18 @@ screen np_setting_pane():
         text "- 正在播放: [np_globals.Music_Name] | [np_globals.Music_Alia] | [np_globals.Music_Author]"
 
         if bool(persistent._NP_API_key_able):
-            text "API接口状态Y":
+            text "API接口可用":
                 xalign 1.0 yalign 0.0
                 xoffset -10
                 style "main_menu_version"
         else:
-            text "API接口状态F":
+            text "API接口状态异常, 请检查连接性, 填写是否正确.":
                 xalign 1.0 yalign 0.0
                 xoffset -10
                 style "main_menu_version"
         #> !已登录 ? 登陆账号 : 注销账号
 
-        if np_globals.Mainurl == default_np_api:
+        if np_globals.Mainurl == DEFAULT_NP_API:
             textbutton "> 默认API不允许登录, 请创建API以使用完整功能"
         else:
             if not np_globals.Np_Status:

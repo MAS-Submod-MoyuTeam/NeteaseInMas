@@ -157,10 +157,10 @@ init 5 python:
             )
         )
 label np_show_userplaylist:
-    python:
-        store.songs.menu_open = False
+    python:  
         try:
             renpy.hide_screen("music_menu")
+            store.songs.menu_open = False
         except:
             pass
     if not np_globals.Np_Status:
@@ -230,11 +230,14 @@ label np_show_setting:
                     $ persistent._np_playmode = NP_DOWNMODE2
         "搜索结果数":
             "决定了搜索歌曲返回的结果数量"
-            $ persistent._NP_search_limit = int(mas_input("输入非数字可能会导致异常, 当前为[persistent._NP_search_limit]"))
+            $ persistent._NP_search_limit = str(mas_input("输入非数字可能会导致异常, 当前为[persistent._NP_search_limit]"))
+            $ np_globals.SearchLimit = persistent._NP_search_limit
         "最大重试次数":
             "在播放歌曲时，转码后的最大尝试播放次数，默认为9"
             "每次重试的间隔为1.5s"
-            $ persistent._np_max_retry = int(mas_input("输入非数字可能会导致异常, 当前为[persistent._np_max_retry]"))
+            $ persistent._np_max_retry = str(mas_input("输入非数字可能会导致异常, 当前为[persistent._np_max_retry]"))
+        "算了":
+            return
     
     "设置完成"
     return

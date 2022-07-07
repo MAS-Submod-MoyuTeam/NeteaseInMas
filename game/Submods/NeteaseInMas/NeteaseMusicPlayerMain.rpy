@@ -7,8 +7,9 @@
  #a为login时的cookies
  #不要反复登录 会风控
 
-default persistent._NP_API_key_able = False
-default persistent._NP_search_limit = 50
+init -100:
+    default persistent._NP_API_key_able = False
+    default persistent._NP_search_limit = "50"
 
 init 999 python:
     persistent._NP_API_key_able = np_util.Check_API_Available()
@@ -36,7 +37,7 @@ init -5 python in np_globals:
     # 未登录：dict["data"]["profile"] = Null
     
     Search = "/search?keywords="
-    SearchLimit = persistent._NP_search_limit
+    SearchLimit = str(store.persistent._NP_search_limit)
     SearchToLimit = "&limit=" + SearchLimit
     MusicCheck = "/check/music?id="
     MusicDownloadurl = "/song/download/url?id="
@@ -259,6 +260,7 @@ init python in np_util:
 
     def Music_Login(phone,pw):
         #登录
+        import time
         pw = str(pw)
         md5pw = hashlib.md5(pw.encode('utf-8'))
         url = np_globals.Mainurl + np_globals.PhoneLogin + str(phone) + np_globals.PhoneLoginPwMd5 + md5pw.hexdigest() + "&timestamp={}".format(time.time())
