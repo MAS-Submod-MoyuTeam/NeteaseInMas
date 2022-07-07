@@ -2,6 +2,9 @@ define NP_DOWNMODE1 = 1
 define NP_DOWNMODE2 = 2
 default persistent._np_playmode = NP_DOWNMODE1
 default persistent._np_max_retry = 9
+define NP_CONMODE_MP3 = 1
+define NP_CONMODE_WAV = 2
+default persistent._np_conmode = NP_CONMODE_WAV
 init 5 python:
     addEvent(
             Event(
@@ -77,7 +80,7 @@ label np_play_musicid:
         m 1dsc "等我下好这首歌...{nw}"
         python:
             import os
-            if os.path.exists(np_globals.Catch + "/" + np_globals.Music_Id + ".mp3"):
+            if os.path.exists(np_globals.Catch + "/" + np_globals.Music_Id + ".mp3") or os.path.exists(np_globals.Catch + "/" + np_globals.Music_Id + ".wav"):
                 catched = True
         if not catched:
             if persistent._np_playmode == NP_DOWNMODE2:
@@ -105,7 +108,10 @@ label np_play_musicid:
             if np_globals.debug:
                 m 1esa "预计时间:[wtime]{nw}"
             if np_globals.Music_Type != "mp3":
-                $ np_util.Music_EncodeMp3()
+                if persistent._np_conmode == NP_CONMODE_MP3:
+                    $ np_util.Music_EncodeMp3()
+                else:
+                    $ np_util.Music_EncodeWav()
                 m 1eua "接下来...等音乐转码完就好了...{w=[wtime]}{nw}"
             
         python:
@@ -118,7 +124,7 @@ label np_play_musicid:
                     np_util.Music_Play(np_globals.Music_Id)
                     playable = True
                 except:
-                    renpy.notify("转码时间比预计要长一些...\n最多重试9次")
+                    renpy.notify("转码时间比预计要长一些...\n最多重试[persistent._np_max_retry]次")
                     retry = retry + 1
                     time.sleep(1.5)
                     if retry > persistent._np_max_retry:
@@ -228,6 +234,17 @@ label np_show_setting:
                     $ persistent._np_playmode = NP_DOWNMODE1
                 "song/download/id":
                     $ persistent._np_playmode = NP_DOWNMODE2
+        "转码格式":
+            "当下载的音乐格式不支持(flac)时, 会调用ffmpeg进行转码, 通常出现于song/download/id"
+            "转码为MP3缓存占用较小, 通常来说flac转为mp3会导致音质损失"
+            "转码为WAV不会有音质损失, 缓存占用较高"
+            "如果下载原格式为MP3, 则不会进行转码"
+            menu:
+                "请选择转码模式, 当前为[persistent._np_conmode]"
+                "mp3":
+                    $ persistent._np_conmode = NP_CONMODE_MP3
+                "wav":
+                    $ persistent._np_conmode = NP_CONMODE_WAV
         "搜索结果数":
             "决定了搜索歌曲返回的结果数量"
             $ persistent._NP_search_limit = str(mas_input("输入非数字可能会导致异常, 当前为[persistent._NP_search_limit]"))

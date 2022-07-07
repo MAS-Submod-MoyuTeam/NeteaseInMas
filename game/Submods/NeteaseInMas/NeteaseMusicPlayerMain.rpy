@@ -258,6 +258,16 @@ init python in np_util:
         cmd = "\"{}\" -i \"{}/{}.flac\" -ab 320k \"{}/{}.mp3\" -y".format(np_globals.FFmpegexe, outdir, id, outdir, id)
         a = subprocess.Popen(cmd)
 
+    def Music_ToWav():
+        """
+        将音频文件转码为WAV
+        id 歌曲id
+        """
+        id = np_globals.Music_Id
+        outdir = np_globals.Catch
+        cmd = "\"{}\" -i \"{}/{}.flac\" -ab 990k \"{}/{}.wav\" -y".format(np_globals.FFmpegexe, outdir, id, outdir, id)
+        a = subprocess.Popen(cmd)
+
     def Music_Login(phone,pw):
         #登录
         import time
@@ -416,6 +426,11 @@ init python in np_util:
         """
         if song is None:
             renpy.music.stop(channel="music", fadeout=fadeout)
+        if np_globals.Music_Type != "mp3":
+            mtype = ".wav"
+        else:
+            mtype = ".mp3"
+
 
         else:
             song = (np_globals.Catch + "/" + song + ".mp3").replace("\\","/")
