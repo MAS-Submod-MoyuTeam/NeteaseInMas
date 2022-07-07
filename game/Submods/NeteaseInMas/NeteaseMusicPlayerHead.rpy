@@ -11,7 +11,7 @@ init -990 python:
         author="P",
         name="Netease Music",
         description="在MAS里播放来自网易云的音乐.\n强烈建议使用{a=https://github.com/Legendkiller21/MAS-Submods-Paste}{i}{u}Paste{/u}{/i}{/a}子模组来进行复制粘贴操作。",
-        version='1.2.7',
+        version='1.3.1',
         settings_pane="np_setting_pane"
     )
 
