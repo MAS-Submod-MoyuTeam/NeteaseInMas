@@ -1,6 +1,7 @@
 define NP_DOWNMODE1 = 1
 define NP_DOWNMODE2 = 2
 default persistent._np_playmode = NP_DOWNMODE1
+default persistent._np_max_retry = 9
 init 5 python:
     addEvent(
             Event(
@@ -120,7 +121,7 @@ label np_play_musicid:
                     renpy.notify("转码时间比预计要长一些...\n最多重试9次")
                     retry = retry + 1
                     time.sleep(1.5)
-                    if retry > 9:
+                    if retry > persistent._np_max_retry:
                         FAILED = True
                         break
                     renpy.say(m, "第[retry]次重试...{nw}")
@@ -229,7 +230,11 @@ label np_show_setting:
                     $ persistent._np_playmode = NP_DOWNMODE2
         "搜索结果数":
             "决定了搜索歌曲返回的结果数量"
-            persistent._NP_search_limit = int(mas_input("输入非数字可能会导致异常, 当前为[persistent._NP_search_limit]"))
+            $ persistent._NP_search_limit = int(mas_input("输入非数字可能会导致异常, 当前为[persistent._NP_search_limit]"))
+        "最大重试次数":
+            "在播放歌曲时，转码后的最大尝试播放次数，默认为9"
+            "每次重试的间隔为1.5s"
+            $ persistent._np_max_retry = int(mas_input("输入非数字可能会导致异常, 当前为[persistent._np_max_retry]"))
     
     "设置完成"
     return
