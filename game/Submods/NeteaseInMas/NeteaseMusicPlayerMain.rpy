@@ -8,6 +8,8 @@
  #不要反复登录 会风控
 
 default persistent._NP_API_key_able = False
+default persistent._NP_search_limit = 50
+
 init 999 python:
     persistent._NP_API_key_able = np_util.Check_API_Available()
 init -5 python in np_globals:
@@ -34,7 +36,7 @@ init -5 python in np_globals:
     # 未登录：dict["data"]["profile"] = Null
     
     Search = "/search?keywords="
-    SearchLimit = "20"
+    SearchLimit = persistent._NP_search_limit
     SearchToLimit = "&limit=" + SearchLimit
     MusicCheck = "/check/music?id="
     MusicDownloadurl = "/song/download/url?id="
