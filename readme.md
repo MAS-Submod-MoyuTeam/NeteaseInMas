@@ -14,7 +14,7 @@
 4.可选择安装[Paste](https://github.com/Legendkiller21/MAS-Submods-Paste)（允许复制粘贴）和/或[Submod Updater Plugin](https://github.com/Booplicate/MAS-Submods-SubmodUpdaterPlugin)（允许通过游戏内更新程序更新 submods.)  
 5.(可选项, 但强烈建议) 根据`使用方法.docx`创建属于你自己的网易云音乐API。
 > ***如果这一步不做，你会与别人共用一个API, 性质相当于你与别人共用一个网易云音乐客户端。***  
-> ***为了安全性，使用默认API时，不允许登录账号，部分功能会受到限制***
+> ***为了安全性，使用默认API时，不允许登录账号，只能使用搜索播放歌曲***
 
 如果您正确安装了所有内容, 那么文件夹结构应该是这样的:
 
@@ -60,7 +60,7 @@ DDLC/
 * 本子模组无法播放版权音乐(需要黑胶VIP)和无版权音乐(网易云无版权), 会提示下载失败
 * 安装如果冲突, 替换与否都可、
 * 提示风控时，请参考`使用方法.docs`更新你的API
-* 使用默认API，仅允许使用搜索播放功能，且播放模式限制为2（1需要登录），收藏歌单无法使用
+* 使用默认API，仅允许使用搜索播放功能，且播放模式限制为1（2需要登录），收藏歌单无法使用
 
 ## 特别感谢
 [NeteaseCloudMusicApi](https://github.com/Binaryify/NeteaseCloudMusicApi) 本子模组使用的API, 没有这个就没有本子模组.  
