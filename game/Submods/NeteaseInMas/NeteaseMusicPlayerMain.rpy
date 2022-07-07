@@ -7,7 +7,7 @@
  #a为login时的cookies
  #不要反复登录 会风控
 
-
+default persistent._NP_API_key_able = None
 init -5 python in np_globals:
     import store
     debug = False
@@ -24,6 +24,7 @@ init -5 python in np_globals:
     PhoneLogin = "/login/cellphone?phone="
     PhoneLoginPw = "&password="
     PhoneLoginPwMd5 = "&md5_password="
+    Amonymous="/register/anonimous"
     RefreshLogin = "/login/refresh" #返回新cookie
     LoginStatus = "/login/status"
     Logout = "/logout"
@@ -35,6 +36,7 @@ init -5 python in np_globals:
     SearchToLimit = "&limit=" + SearchLimit
     MusicCheck = "/check/music?id="
     MusicDownloadurl = "/song/download/url?id="
+    MusicDownloadurl2 = "/song/url?id="
     MusicDetail = "/song/detail?ids="
     UserPlaylist = "/user/playlist?uid="
     PlaylistDetail = "/playlist/detail?id="
@@ -101,6 +103,18 @@ init python in np_util:
     import store.songs as songs
     import urllib2
     
+    def Check_API_Available():
+        """
+        检测API可用性
+        return:
+            True/False
+        """
+        API = requests.get(np_globals.Mainurl)
+        if API.status_code != 200:
+            return False
+        else:
+            return True
+
     def Check_FFmpeg_init():
         a = os.getenv('Path')
         if a.find(np_globals.FFmpegDir) == -1:
@@ -243,7 +257,7 @@ init python in np_util:
         #登录
         pw = str(pw)
         md5pw = hashlib.md5(pw.encode('utf-8'))
-        url = np_globals.Mainurl + np_globals.PhoneLogin + str(phone) + np_globals.PhoneLoginPwMd5 + md5pw.hexdigest()
+        url = np_globals.Mainurl + np_globals.PhoneLogin + str(phone) + np_globals.PhoneLoginPwMd5 + md5pw.hexdigest() + "&timestamp={}".format(time.time())
         login = requests.get(url, verify=np_globals.VerifyPath)
         loginjson = login.json()
         failmessage = ""
@@ -252,7 +266,7 @@ init python in np_util:
         except:
             pass
         if failmessage == "当前登录存在安全风险，请稍后再试":
-            raise Exception("API可能已被风控, 请更换API或尝试更新你fork的网易云音乐存储库")
+            renpy.notify("API可能已被风控, 请更换API或尝试更新你fork的网易云音乐存储库")
         np_globals.Cookies = login.cookies
         store.persistent.np_Cookie = login.cookies
         Music_Login_Status()
@@ -321,7 +335,29 @@ init python in np_util:
         if file_url == None:
             return False
         _music_download = requests.get(file_url,cookies = cookie, verify=np_globals.VerifyPath, stream=True)
-        _flac = open(np_globals.Catch + "/" + id + ".flac", 'wb')
+        _flac = open(np_globals.Catch + "/" + id + "." + np_globals.Music_Type, 'wb')
+        for chunk in _music_download.iter_content(chunk_size = np_globals.CatchSize):
+            if chunk:
+                _flac.write(chunk)
+        return True
+
+    def Music_Download_2(id):
+        #根据ID下载flac - 低音质
+        id = str(id)
+        cookie = np_globals.Cookies
+        url = np_globals.Mainurl + np_globals.MusicDownloadurl2 + id
+        music = requests.get(url, cookies = cookie, verify=np_globals.VerifyPath)
+        try:
+            getdata = music.json()
+        except Exception:
+            return False
+        file_url = getdata["data"]["url"]
+        np_globals.Music_Size = getdata['data']['size']
+        np_globals.Music_Type = getdata['data']['type']
+        if file_url == None:
+            return False
+        _music_download = requests.get(file_url,cookies = cookie, verify=np_globals.VerifyPath, stream=True)
+        _flac = open(np_globals.Catch + "/" + id + "." + np_globals.Music_Type, 'wb')
         for chunk in _music_download.iter_content(chunk_size = np_globals.CatchSize):
             if chunk:
                 _flac.write(chunk)

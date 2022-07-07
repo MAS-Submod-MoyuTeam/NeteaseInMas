@@ -1,3 +1,4 @@
+default persistent._np_playmode == 2
 init 5 python:
     addEvent(
             Event(
@@ -95,8 +96,9 @@ label np_play_musicid:
             
             if np_globals.debug:
                 m 1esa "预计时间:[wtime]{nw}"
-            $ np_util.Music_EncodeMp3()
-            m 1eua "接下来...等音乐转码完就好了...{w=[wtime]}{nw}"
+            if np_globals.Music_Type != "mp3":
+                $ np_util.Music_EncodeMp3()
+                m 1eua "接下来...等音乐转码完就好了...{w=[wtime]}{nw}"
             
         python:
             import time
@@ -108,9 +110,10 @@ label np_play_musicid:
                     np_util.Music_Play(np_globals.Music_Id)
                     playable = True
                 except:
+                    renpy.notify("转码时间比预计要长一些...\n最多重试9次")
                     retry = retry + 1
                     time.sleep(1.5)
-                    if retry > 7:
+                    if retry > 9:
                         FAILED = True
                         break
                     renpy.say(m, "第[retry]次重试...{nw}")
