@@ -36,7 +36,7 @@ DDLC/
                 NeteaseMusicPlayerMain.rpy
                     **子模组定义方法, 全局变量等的脚本文件**
                 NeteaseMusicPlayerOverwrite.rpy
-                    **子模组重写原MAS方法的脚本, 啥都没写可以删**
+                    **子模组重写原MAS脚本内容，用于额外功能按钮**
                 NeteaseMusicPlayerThreading.rpy
                     **子模组Threading文件, 似乎也可以删**
                 NeteaseMusicPlayerTopic.rpy
