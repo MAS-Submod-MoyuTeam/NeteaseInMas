@@ -27,6 +27,7 @@ init 1 python:
     np_eggs.append(['Россия - священная наша держава', 'np_egg_NAofRUS'])
     np_eggs.append(['欢乐颂', 'np_egg_AofEU'])
     np_eggs.append(['国际歌', 'np_egg_LInternationale'])
+    np_eggs.append(['桜の記憶', 'np_egg_ou'])
 
 init 999 python:
     def np_check_eggs(keyword):
@@ -36,8 +37,10 @@ init 999 python:
                 egg_label = i[1]
                 break
         return egg_label
-
-
+#桜の記憶
+label np_egg_ou:
+    m "我想她躲起来的时候, 内心一定期望着别人能找到吧."
+    return
 #INTERNET OVERDOSE
 label np_egg_INTERNETOVERDOSE:
         m 3hfb "我乃从天而降的一道光, 照亮混沌的电子世界"
