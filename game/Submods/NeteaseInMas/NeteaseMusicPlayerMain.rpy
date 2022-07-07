@@ -7,7 +7,9 @@
  #a为login时的cookies
  #不要反复登录 会风控
 
-default persistent._NP_API_key_able = None
+default persistent._NP_API_key_able = False
+init 999 python:
+    persistent._NP_API_key_able = np_util.Check_API_Available()
 init -5 python in np_globals:
     import store
     debug = False
@@ -109,7 +111,7 @@ init python in np_util:
         return:
             True/False
         """
-        API = requests.get(np_globals.Mainurl)
+        API = requests.get(np_globals.Mainurl, verify = np_globals.VerifyPath)
         if API.status_code != 200:
             return False
         else:
@@ -351,9 +353,9 @@ init python in np_util:
             getdata = music.json()
         except Exception:
             return False
-        file_url = getdata["data"]["url"]
-        np_globals.Music_Size = getdata['data']['size']
-        np_globals.Music_Type = getdata['data']['type']
+        file_url = getdata["data"][0]["url"]
+        np_globals.Music_Size = getdata['data'][0]['size']
+        np_globals.Music_Type = getdata['data'][0]['type']
         if file_url == None:
             return False
         _music_download = requests.get(file_url,cookies = cookie, verify=np_globals.VerifyPath, stream=True)

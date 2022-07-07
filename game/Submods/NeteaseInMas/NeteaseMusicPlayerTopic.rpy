@@ -1,4 +1,6 @@
-default persistent._np_playmode == 2
+define NP_DOWNMODE1 = 1
+define NP_DOWNMODE2 = 2
+default persistent._np_playmode = NP_DOWNMODE1
 init 5 python:
     addEvent(
             Event(
@@ -11,6 +13,8 @@ init 5 python:
             )
         )
 label np_search:
+    if store.mas_extramenu.menu_visible:
+        call mas_extra_menu_close
     $ response_quips = [
         "想听什么?",
         "[player], 今天想听什么呢?",
@@ -50,7 +54,7 @@ label np_menu_display:
             jump np_search
         else:
             m 1hua "好~{w=1}{nw}"
-            if not np_globals.Np_Status:
+            if not np_globals.Np_Status and persistent._np_playmode == NP_DOWNMODE2:
                 m 3rksdra "呃...我们好像忘记登录了..."
                 m 3hksdrb "去设置里登录一下吧, [player]."
                 return
@@ -67,7 +71,7 @@ label np_play_musicid:
     #    m "这首歌...网易云没版权了..."
     #    m "换一首吧~"
     #    return
-    if np_globals.Np_Status: 
+    if np_globals.Np_Status or persistent._np_playmode == NP_DOWNMODE1: 
         call np_timed_text_events_prep
         m 1dsc "等我下好这首歌...{nw}"
         python:
@@ -75,7 +79,10 @@ label np_play_musicid:
             if os.path.exists(np_globals.Catch + "/" + np_globals.Music_Id + ".mp3"):
                 catched = True
         if not catched:
-            $ res = np_util.Music_Download(np_globals.Music_Id)
+            if persistent._np_playmode == NP_DOWNMODE2:
+                $ res = np_util.Music_Download(np_globals.Music_Id)
+            else:
+                $ res = np_util.Music_Download_2(np_globals.Music_Id)
             if res:
                 m 1ksa "好了~{w=0.3}{nw}"
             else:
@@ -130,9 +137,12 @@ label np_play_musicid:
             if egglabel != "":
                 if not renpy.seen_label(egglabel):
                     renpy.call(egglabel)
-    else:
+    elif persistent._np_playmode == NP_DOWNMODE2:
         m 3rksdra "呃...我们好像忘记登录了..."
         m 3hksdrb "去设置里登录一下吧, [player]."
+    else:
+        m "似乎出了一些意外问题..."
+        m "重试一下吧, [player]"
     return
 init 5 python:
     addEvent(
@@ -181,6 +191,45 @@ label np_show_userplaylist:
     call np_play_musicid
     return
 
+init 5 python:
+    addEvent(
+            Event(
+                persistent.event_database,          
+                eventlabel="np_show_setting",        
+                category=["Netease Music"],           
+                prompt="设置",        
+                pool=True,
+                unlocked=True
+            )
+        )
+label np_show_setting:
+    python:
+        if persistent._np_playmode == 1:
+            mode = "song/id(MODE1)"
+        elif persistent._np_playmode == 2:
+            mode = "song/download/id(MODE2)"
+        else:
+            mode = "?"
+
+    menu:
+        "请选择设置项"
+        "下载模式":
+            "下载模式有两个选项"
+            "接口song/id和song/download/id"
+            "song/id可以在非登录状态使用，而song/download/id必须登录使用"
+            "song/id对于部分歌曲(需要VIP)可能只能播放试听片段"
+            "song/id的加载速度更快"
+            "song/download/id的音质可能比song/id更好"
+            "两者都无法播放非版权音乐和需要黑胶VIP的音乐"
+            menu:
+                "请选择播放模式, 当前为[mode]"
+                "song/id":
+                    $ persistent._np_playmode = NP_DOWNMODE1
+                "song/download/id":
+                    $ persistent._np_playmode = NP_DOWNMODE2
+    
+    "设置完成"
+    return
 
 label np_timed_text_events_prep:
     python:
@@ -206,3 +255,4 @@ label np_timed_text_events_wrapup:
         renpy.game.preferences.afm_enable = afm_pref
 
     return
+

@@ -4,6 +4,8 @@
 #            - 刷新登录缓存 X - 无法实现
 #            - 正在播放
 #            - 清除下载歌曲
+define default_np_api = "https://netease-cloud-music-api-murex-gamma.vercel.app"
+
 init -990 python:
     store.mas_submod_utils.Submod(
         author="P",
@@ -49,7 +51,7 @@ init -5 python:
     def np_get_ml():
         np_util.Get_User_Playlist()
         renpy.show_screen("np_message", message = "ok")
-        
+
     np_buttontip_login = "登录网易云音乐"
     np_buttontip_forcerefresh = "强制检测登录状态"
     np_buttontip_logout = "登出网易云音乐"
@@ -59,7 +61,7 @@ screen np_setting_pane():
     python:
         np_screen_tt = store.renpy.get_screen("submods", "screens").scope["tooltip"]
         np_catchsize = np_util.Catch_size()/1000000
-    $ warn_message = "Netease Music不会将您的密码上传至除我(P)以外的第三者, 且密码上传时使用MD5加密.但请注意, 登录时关闭了证书验证(因为开启就验证失败), 所以仍然有一定的可能性导致被盗号.\n如果真的被盗号, 通常是因为你下了别人发的版本/你的PC上有病毒,MD5没那么好破"
+    $ warn_message = "Netease Music不会将您的密码上传至任何第三者, 且密码上传时使用MD5加密.但请注意, 登录时关闭了证书验证(因为开启就验证失败), 所以仍然有一定的可能性导致被盗号.\n如果真的被盗号, 通常是因为你下了别人发的版本/你的PC上有病毒,MD5没那么好破"
 #    """
 #    Submod菜单:
 #        计划格式:
@@ -78,7 +80,7 @@ screen np_setting_pane():
         text "- 当前登录: [np_globals.Np_NickName]"
         text "- 正在播放: [np_globals.Music_Name] | [np_globals.Music_Alia] | [np_globals.Music_Author]"
 
-        if not bool(persistent._NP_API_key_able):
+        if bool(persistent._NP_API_key_able):
             text "API接口状态Y":
                 xalign 1.0 yalign 0.0
                 xoffset -10
@@ -90,25 +92,27 @@ screen np_setting_pane():
                 style "main_menu_version"
         #> !已登录 ? 登陆账号 : 注销账号
 
-        
-        if not np_globals.Np_Status:
-            textbutton "> 登录账号":
-                action Show("np_login")
-                hovered SetField(np_screen_tt, "value", np_buttontip_login)
-                unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
-            textbutton "> 强制刷新登录":
-                action Function(np_force_refresh)
-                hovered SetField(np_screen_tt, "value", np_buttontip_forcerefresh)
-                unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
+        if np_globals.Mainurl == default_np_api:
+            textbutton "> 默认API不允许登录, 请创建API以使用完整功能"
         else:
-            textbutton "> 注销账号":
-                action Show("np_logout")
-                hovered SetField(np_screen_tt, "value", np_buttontip_logout)
-                unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
-            textbutton "> 获取'我喜欢的音乐'":
-                hovered SetField(np_screen_tt, "value", np_buttontip_playermusiclist)
-                unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
-                action Function(np_get_ml)
+            if not np_globals.Np_Status:
+                textbutton "> 登录账号":
+                    action Show("np_login")
+                    hovered SetField(np_screen_tt, "value", np_buttontip_login)
+                    unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
+                textbutton "> 强制刷新登录":
+                    action Function(np_force_refresh)
+                    hovered SetField(np_screen_tt, "value", np_buttontip_forcerefresh)
+                    unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
+            else:
+                textbutton "> 注销账号":
+                    action Show("np_logout")
+                    hovered SetField(np_screen_tt, "value", np_buttontip_logout)
+                    unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
+                textbutton "> 获取'我喜欢的音乐'":
+                    hovered SetField(np_screen_tt, "value", np_buttontip_playermusiclist)
+                    unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
+                    action Function(np_get_ml)
         
         textbutton "> 安全性问题说明":
             action Show("np_message", message = warn_message)
@@ -118,10 +122,6 @@ screen np_setting_pane():
                 action Function(np_del_catch)
         else:
             textbutton "> 清理歌曲缓存 - [np_catchsize]MB (请在开始使用前清理缓存)"
-
-        if persistent._np_playmode == 2:
-            textbutton "> 下载模式 - 2"
-
 
         if np_globals.debug:
             textbutton "> debug":
