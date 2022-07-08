@@ -98,20 +98,20 @@ label np_play_musicid:
                 if np_globals.Music_Type == "mp3":
                     speed = 4500.0
                 else:
-                    speed = 3250.0
+                    speed = 90000
                 wtime = np_globals.Music_Size / 1024 / speed
                 if wtime > 20:
                     wtime = 20
-                elif wtime < 8:
-                    wtime = 8
+                elif wtime < 1:
+                    wtime = 1
             
             if np_globals.debug:
                 m 1esa "预计时间:[wtime]{nw}"
             if np_globals.Music_Type != "mp3":
                 if persistent._np_conmode == NP_CONMODE_MP3:
-                    $ np_util.Music_EncodeMp3()
+                    $ np_util.Music_ToMp3()
                 else:
-                    $ np_util.Music_EncodeWav()
+                    $ np_util.Music_ToWav()
                 m 1eua "接下来...等音乐转码完就好了...{w=[wtime]}{nw}"
             
         python:
@@ -174,10 +174,10 @@ label np_show_userplaylist:
         m 3hksdrb "去设置里登录一下吧, [player]."
         return
     if not len(np_globals.Play_List) > 0:
-        m 1eka "呃...我还不知道你喜欢听什么呢."
+        m 1eka "呃...我还不知道你喜欢听什么呢.{w=2}{nw}"
         m 1dua "等我一下...{nw}"
         $ np_util.Get_User_Playlist()
-        m 1eub "我知道你喜欢什么了哦, [player]."
+        m 1eub "我知道你喜欢什么了哦, [player].{w=2}{nw}"
     #m "call display_np_music_menu{nw}"
     call display_np_music_menu
     #m "设置Music_Id{nw}"
@@ -236,8 +236,8 @@ label np_show_setting:
                     $ persistent._np_playmode = NP_DOWNMODE2
         "转码格式":
             "当下载的音乐格式不支持(flac)时, 会调用ffmpeg进行转码, 通常出现于song/download/id"
-            "转码为MP3缓存占用较小, 通常来说flac转为mp3会导致音质损失"
-            "转码为WAV不会有音质损失, 缓存占用较高"
+            "转码为MP3存储占用较低, 通常来说flac转为mp3会导致音质损失，而且速度相比于WAV极慢"
+            "转码为WAV不会有音质损失, 存储占用较高，但是几乎瞬间转码完成"
             "如果下载原格式为MP3, 则不会进行转码"
             menu:
                 "请选择转码模式, 当前为[persistent._np_conmode]"

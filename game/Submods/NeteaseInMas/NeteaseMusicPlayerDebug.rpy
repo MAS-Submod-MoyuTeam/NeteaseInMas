@@ -2,6 +2,7 @@ init 999 python:
     if np_globals.debug:
         renpy.config.debug = True
         renpy.config.developer = True
+        np_globals.Mainurl = "https://netease-cloud-music-api-imited.vercel.app"
 init -4 python:
     _np_music_id = ""
     def np_debug_check():
@@ -16,8 +17,7 @@ init -4 python:
         np_util.Music_Login(nidianniman, "noway")
         renpy.show_screen("np_message", message = "ok")
     def np_fastlogin_fail():
-        np_util.Music_Login("31423423", "-1234")
-        renpy.show_screen("np_message", message = "ok")
+        raise Exception("6")
     def np_download_music():
         renpy.show_screen("np_login_input", message = "输入下载id", returnto = "_np_music_id", ok_action = Function(np_download_music_p2))
 
@@ -53,7 +53,7 @@ screen np_debug():
             yfill False
             spacing 5
             hbox:
-                text "Nickname:[np_globals.Np_NickName]"
+                text "Nickname:[np_globals.Np_NickName] | ReqCode:[np_globals.ReqCode]"
             hbox:
                 text "Music_ID: [np_globals.Music_Id] | _np_music_id: [_np_music_id]"
             hbox:
@@ -66,7 +66,7 @@ screen np_debug():
                     action Function(np_debug_check)
                 textbutton "快速登录sp":
                     action Function(np_fastlogin)
-                textbutton "快速登录 - 异常情况":
+                textbutton "引发一个异常":
                     action Function(np_fastlogin_fail)
                 textbutton "初始化FFmpeg环境变量":
                     action Function(np_initFFmpeg)

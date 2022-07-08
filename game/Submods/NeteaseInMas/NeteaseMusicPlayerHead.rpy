@@ -27,7 +27,7 @@ init -5 python:
             np_globals._LoginPw =  _np_LoginPw
             result = np_util.Music_Login(np_globals._LoginPhone, np_globals._LoginPw)
         if not result:
-            renpy.show_screen("np_message", message = "登录失败! \n1.首先检查账号密码是否正确.\n2.若密码正确, 等待2分钟后, 强制刷新登录(不是登录)即可.")
+            renpy.show_screen("np_message", message = "登录失败! 请检查账号密码是否正确!")
         renpy.hide_screen("np_login")
     
     def np_logout_method():
@@ -60,7 +60,7 @@ init -5 python:
 screen np_setting_pane():
     python:
         np_screen_tt = store.renpy.get_screen("submods", "screens").scope["tooltip"]
-        np_catchsize = np_util.Catch_size()/1000000
+        np_catchsize = np_util.Catch_size()/1024/1024
     $ warn_message = "Netease Music不会将您的密码上传至任何第三者, 且密码上传时使用MD5加密.但请注意, 登录时关闭了证书验证(因为开启就验证失败), 所以仍然有一定的可能性导致被盗号.\n如果真的被盗号, 通常是因为你下了别人发的版本/你的PC上有病毒,MD5没那么好破"
 #    """
 #    Submod菜单:
@@ -81,7 +81,7 @@ screen np_setting_pane():
         text "- 正在播放: [np_globals.Music_Name] | [np_globals.Music_Alia] | [np_globals.Music_Author]"
 
         if bool(persistent._NP_API_key_able):
-            text "API接口可用":
+            text "API接口正常":
                 xalign 1.0 yalign 0.0
                 xoffset -10
                 style "main_menu_version"

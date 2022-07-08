@@ -15,7 +15,7 @@ init 999 python:
     persistent._NP_API_key_able = np_util.Check_API_Available()
 init -5 python in np_globals:
     import store
-    debug = False
+    debug = True
 
     Basedir = renpy.config.basedir
     Catch = Basedir + "/game/Submods/NeteaseInMas/Catch"
@@ -85,6 +85,7 @@ init -5 python in np_globals:
 
     GlobalSubP = None
 
+    ReqCode = 0
     # Music menu菜单
     menu_open = False
     curr_page = 0
@@ -115,6 +116,7 @@ init python in np_util:
             True/False
         """
         API = requests.get(np_globals.Mainurl, verify = np_globals.VerifyPath)
+        np_globals.ReqCode = API.status_code
         if API.status_code != 200:
             return False
         else:
@@ -273,7 +275,7 @@ init python in np_util:
         import time
         pw = str(pw)
         md5pw = hashlib.md5(pw.encode('utf-8'))
-        url = np_globals.Mainurl + np_globals.PhoneLogin + str(phone) + np_globals.PhoneLoginPwMd5 + md5pw.hexdigest() + "&timestamp={}".format(time.time())
+        url = np_globals.Mainurl + np_globals.PhoneLogin + str(phone) + np_globals.PhoneLoginPwMd5 + md5pw.hexdigest() + "&timestamp={}".format(int(round(time.time()*1000)))
         login = requests.get(url, verify=np_globals.VerifyPath)
         loginjson = login.json()
         failmessage = ""
@@ -300,9 +302,11 @@ init python in np_util:
         """
         检查登陆状态, 离线返回False, 在线返回昵称
         """
+        import time
         cookie = np_globals.Cookies
-        url = np_globals.Mainurl + np_globals.LoginStatus
+        url = np_globals.Mainurl + np_globals.LoginStatus + "?&timestamp={}".format(int(time.time()*1000))
         check = requests.get(url, cookies = cookie, verify = np_globals.VerifyPath)
+        np_globals.ReqCode = check.status_code
         result = check.json()
         try:
             profile = result["data"]["profile"]
@@ -426,14 +430,12 @@ init python in np_util:
         """
         if song is None:
             renpy.music.stop(channel="music", fadeout=fadeout)
-        if np_globals.Music_Type != "mp3":
-            mtype = ".wav"
         else:
-            mtype = ".mp3"
-
-
-        else:
-            song = (np_globals.Catch + "/" + song + ".mp3").replace("\\","/")
+            if np_globals.Music_Type != "mp3":
+                mtype = ".wav"
+            else:
+                mtype = ".mp3"
+            song = (np_globals.Catch + "/" + song + mtype).replace("\\","/")
             renpy.music.play(
                 song,
                 channel="music",
