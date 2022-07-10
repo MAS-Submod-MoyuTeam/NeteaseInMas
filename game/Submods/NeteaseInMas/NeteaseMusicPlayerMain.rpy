@@ -406,6 +406,59 @@ init python in np_util:
             if True:
                 file = np_globals.Catch + "/" + file_name
                 os.remove(file)
+    
+    def Music_GetCatchSaveList():
+        dirs = os.listdir(np_globals.Catch)
+        catched = []
+        for file_name in dirs:
+            catched.append((np_globals.Catch + "/" +file_name).replace("\\","/"))
+        return catched
+    
+    def Music_Play_List(song=Music_GetCatchSaveList(), fadein=1.2, loop=True, set_per=True, fadeout=1.2, if_changed=False):
+        Music_Deleteflac()
+        """
+        播放已缓存列表
+        IN:
+            song - Song to play. If None, the channel is stopped
+            fadein - Number of seconds to fade the song in
+                (Default: 0.0)
+            loop - True if we should loop the song if possible, False to not loop.
+                (Default: True)
+            set_per - True if we should set persistent track, False if not
+                (Default: False)
+            fadeout - Number of seconds to fade the song out
+                (Default: 0.0)
+            if_changed - Whether or not to only set the song if it's changing
+                (Use to play the same song again without it being restarted)
+                (Default: False)
+        """
+        if song is None or song == []:
+            renpy.music.stop(channel="music", fadeout=fadeout)
+        else:
+            #if np_globals.Music_Type != "mp3":
+            #    mtype = ".wav"
+            #else:
+            #    mtype = ".mp3"
+            #song = (np_globals.Catch + "/" + song + mtype).replace("\\","/")
+            renpy.music.play(
+                song,
+                channel="music",
+                loop=loop,
+                synchro_start=True,
+                fadein=fadein,
+                fadeout=fadeout,
+                if_changed=if_changed
+            )
+            songs.current_track = song
+            songs.selected_track = song
+
+        if set_per:
+            store.persistent.current_track = song
+        np_globals.Np_Playing = True
+        np_globals.Music_Name = "<正在播放缓存列表>"
+        np_globals.Music_Alia = ""
+        np_globals.Music_Author = ""
+        np_globals.Music_Id = ""
 
     def Music_Play(song, fadein=1.2, loop=True, set_per=True, fadeout=1.2, if_changed=False):
         Music_Deleteflac()

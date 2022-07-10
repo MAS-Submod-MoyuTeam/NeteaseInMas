@@ -61,7 +61,7 @@ screen np_setting_pane():
     python:
         np_screen_tt = store.renpy.get_screen("submods", "screens").scope["tooltip"]
         np_catchsize = np_util.Catch_size()/1024/1024
-    $ warn_message = "Netease Music不会将您的密码上传至任何第三者, 且密码上传时使用MD5加密.但请注意, 登录时关闭了证书验证(因为开启就验证失败), 所以仍然有一定的可能性导致被盗号.\n如果真的被盗号, 通常是因为你下了别人发的版本/你的PC上有病毒,MD5没那么好破"
+    $ warn_message = "Netease Music不会将您的密码上传至任何第三者, 且密码上传时使用MD5加密.但请注意, 登录时关闭了证书验证(因为开启就验证失败), 所以仍然有一定的可能性导致被盗号.\n如果真的被盗号, 通常是因为你下了别人发的版本/你的PC上有病毒,MD5没那么好破\n如果想避免上述情况，建议不登录使用"
 #    """
 #    Submod菜单:
 #        计划格式:

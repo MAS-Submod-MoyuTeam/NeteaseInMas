@@ -14,7 +14,8 @@ init 5 python:
                 prompt="搜一首歌",        
                 pool=True,
                 unlocked=True
-            )
+            ),
+        restartBlacklist=True
         )
 label np_search:
     if store.mas_extramenu.menu_visible:
@@ -98,12 +99,12 @@ label np_play_musicid:
                 if np_globals.Music_Type == "mp3":
                     speed = 4500.0
                 else:
-                    speed = 90000
+                    speed = 30000
                 wtime = np_globals.Music_Size / 1024 / speed
                 if wtime > 20:
                     wtime = 20
-                elif wtime < 1:
-                    wtime = 1
+                elif wtime < 4:
+                    wtime = 4
             
             if np_globals.debug:
                 m 1esa "预计时间:[wtime]{nw}"
@@ -160,7 +161,8 @@ init 5 python:
                 prompt="[player]喜欢的音乐",        
                 pool=True,
                 unlocked=True
-            )
+            ),
+        restartBlacklist=True
         )
 label np_show_userplaylist:
     python:  
@@ -207,7 +209,8 @@ init 5 python:
                 prompt="设置",        
                 pool=True,
                 unlocked=True
-            )
+            ),
+        restartBlacklist=True
         )
 label np_show_setting:
     python:
