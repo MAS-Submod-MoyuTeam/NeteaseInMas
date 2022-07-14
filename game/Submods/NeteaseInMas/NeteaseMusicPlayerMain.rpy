@@ -356,14 +356,16 @@ init python in np_util:
         file_url = getdata["data"]["url"]
         np_globals.Music_Size = getdata['data']['size']
         np_globals.Music_Type = getdata['data']['type']
-        if file_url == None:
+        if file_url is None:
             return False
         _music_download = requests.get(file_url,cookies = cookie, verify=np_globals.VerifyPath, stream=True)
         _flac = open(np_globals.Catch + "/" + id + "." + np_globals.Music_Type, 'wb')
         for chunk in _music_download.iter_content(chunk_size = np_globals.CatchSize):
             if chunk:
                 _flac.write(chunk)
-        return True
+
+        # 验证文件是否存在
+        return os.path.exists(np_globals.Catch + "/" + id + "." + np_globals.Music_Type)
 
     def Music_Download_2(id):
         #根据ID下载flac - 低音质
@@ -385,7 +387,8 @@ init python in np_util:
         for chunk in _music_download.iter_content(chunk_size = np_globals.CatchSize):
             if chunk:
                 _flac.write(chunk)
-        return True
+        # 验证文件是否存在
+        return os.path.exists(np_globals.Catch + "/" + id + "." + np_globals.Music_Type)
     
     def Music_Check():
         """
