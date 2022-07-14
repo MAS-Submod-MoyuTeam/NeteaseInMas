@@ -99,7 +99,7 @@ label np_play_musicid:
                 if np_globals.Music_Type == "mp3":
                     speed = 4500.0
                 else:
-                    speed = 30000
+                    speed = 9000
                 wtime = np_globals.Music_Size / 1024 / speed
                 if wtime > 20:
                     wtime = 20

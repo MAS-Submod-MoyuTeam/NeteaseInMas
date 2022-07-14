@@ -15,7 +15,11 @@ init 999 python:
     persistent._NP_API_key_able = np_util.Check_API_Available()
 init -5 python in np_globals:
     import store
-    debug = False
+    import os
+    if os.path.exists(renpy.config.basedir + "/game/Submods/NeteaseInMas/debug.np"):
+        debug=True
+    else:
+        debug=False
 
     Basedir = renpy.config.basedir
     Catch = Basedir + "/game/Submods/NeteaseInMas/Catch"
