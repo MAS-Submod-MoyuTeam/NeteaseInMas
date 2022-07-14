@@ -103,8 +103,8 @@ label np_play_musicid:
                 wtime = np_globals.Music_Size / 1024 / speed
                 if wtime > 20:
                     wtime = 20
-                elif wtime < 4:
-                    wtime = 4
+                elif wtime < 7:
+                    wtime = 7
             
             if np_globals.debug:
                 m 1esa "预计时间:[wtime]{nw}"

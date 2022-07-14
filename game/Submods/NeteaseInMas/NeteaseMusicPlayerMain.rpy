@@ -449,11 +449,6 @@ init python in np_util:
                 fadeout=fadeout,
                 if_changed=if_changed
             )
-            songs.current_track = song
-            songs.selected_track = song
-
-        if set_per:
-            store.persistent.current_track = song
         np_globals.Np_Playing = True
         np_globals.Music_Name = "<正在播放缓存列表>"
         np_globals.Music_Alia = ""
