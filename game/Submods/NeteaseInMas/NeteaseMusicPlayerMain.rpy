@@ -100,9 +100,9 @@ init -5 python in np_globals:
 
 init python in np_util:
     from urllib import quote
-    import ssl
     import json
     import requests
+    import ssl
     #import renpy
     import store
     import hashlib
@@ -421,7 +421,7 @@ init python in np_util:
             catched.append((np_globals.Catch + "/" +file_name).replace("\\","/"))
         return catched
     
-    def Music_Play_List(song=Music_GetCatchSaveList(), fadein=1.2, loop=True, set_per=True, fadeout=1.2, if_changed=False):
+    def Music_Play_List(song=Music_GetCatchSaveList(), fadein=1.2, loop=True, set_per=False, fadeout=1.2, if_changed=False):
         Music_Deleteflac()
         """
         播放已缓存列表
@@ -462,7 +462,7 @@ init python in np_util:
         np_globals.Music_Author = ""
         np_globals.Music_Id = ""
 
-    def Music_Play(song, fadein=1.2, loop=True, set_per=True, fadeout=1.2, if_changed=False):
+    def Music_Play(song, fadein=1.2, loop=True, set_per=False, fadeout=1.2, if_changed=False):
         Music_Deleteflac()
         song = str(song)
         

@@ -1,3 +1,4 @@
+define np_paused = False
 init 100:
     screen mas_extramenu_area():
         zorder 52
@@ -26,6 +27,26 @@ init 100:
                     ysize 35
                     style "hkb_button"
                     action Function(np_extra_musiclist)
+                textbutton _("循环播放缓存"):
+                    xsize 175
+                    ysize 35
+                    style "hkb_button"
+                    action Function(np_loopplay)
+                hbox:
+                    textbutton _("播放"):
+                        xsize 80
+                        ysize 35
+                        style "hkb_button"
+                        action Function(np_resume)
+                    label "":
+                        xsize 15
+                        ysize 35
+                    textbutton _("暂停"):
+                        xsize 80
+                        ysize 35
+                        style "hkb_button"
+                        action Function(np_pause)
+                    
             # zoom control
         frame:
             area (195, 450, 80, 255)
@@ -54,6 +75,14 @@ init 100:
             renpy.call('np_show_userplaylist')
             renpy.call('mas_extra_menu_close_p1')
             renpy.jump('mas_extra_menu_close_p2')
+        def np_loopplay():
+            renpy.call('np_loop')
+        def np_pause():
+            renpy.music.set_pause(True)
+            np_paused=True
+        def np_resume():
+            renpy.music.set_pause(False)
+            np_paused=False
 
 label mas_extra_menu_close_p1:
     $ store.mas_extramenu.menu_visible = False

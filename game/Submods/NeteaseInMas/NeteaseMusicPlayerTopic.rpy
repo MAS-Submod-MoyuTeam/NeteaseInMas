@@ -17,6 +17,22 @@ init 5 python:
             ),
         restartBlacklist=True
         )
+init 5 python:
+    addEvent(
+            Event(
+                persistent.event_database,          
+                eventlabel="np_loop",        
+                category=["Netease Music"],           
+                prompt="循环播放缓存",        
+                pool=True,
+                unlocked=True
+            ),
+        restartBlacklist=True
+        )
+label np_loop:
+    $ np_util.Music_Play_List()
+    m "ok"
+    return
 label np_search:
     if store.mas_extramenu.menu_visible:
         call mas_extra_menu_close
@@ -99,12 +115,12 @@ label np_play_musicid:
                 if np_globals.Music_Type == "mp3":
                     speed = 4500.0
                 else:
-                    speed = 9000
+                    speed = 30000
                 wtime = np_globals.Music_Size / 1024 / speed
                 if wtime > 20:
                     wtime = 20
-                elif wtime < 5:
-                    wtime = 5
+                elif wtime < 4:
+                    wtime = 4
             
             if np_globals.debug:
                 m 1esa "预计时间:[wtime]{nw}"
