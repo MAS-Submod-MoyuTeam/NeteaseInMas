@@ -88,6 +88,7 @@ label np_menu_display:
 label np_play_musicid:
     python:
         catched = False
+        ctype=""
     #if not np_util.Music_Check():
     #    m "这首歌...网易云没版权了..."
     #    m "换一首吧~"
@@ -99,6 +100,10 @@ label np_play_musicid:
             import os
             if os.path.exists(np_globals.Catch + "/" + np_globals.Music_Id + ".mp3") or os.path.exists(np_globals.Catch + "/" + np_globals.Music_Id + ".wav"):
                 catched = True
+                if os.path.exists(np_globals.Catch + "/" + np_globals.Music_Id + ".mp3"):
+                    ctype=".mp3"
+                else:
+                    ctype=".wav"
         if not catched:
             if persistent._np_playmode == NP_DOWNMODE2:
                 $ res = np_util.Music_Download(np_globals.Music_Id)

@@ -365,7 +365,7 @@ init python in np_util:
                 _flac.write(chunk)
 
         # 验证文件是否存在
-        return os.path.exists(np_globals.Catch + "/" + id + "." + np_globals.Music_Type)
+        return True
 
     def Music_Download_2(id):
         #根据ID下载flac - 低音质
@@ -387,8 +387,7 @@ init python in np_util:
         for chunk in _music_download.iter_content(chunk_size = np_globals.CatchSize):
             if chunk:
                 _flac.write(chunk)
-        # 验证文件是否存在
-        return os.path.exists(np_globals.Catch + "/" + id + "." + np_globals.Music_Type)
+        return True
     
     def Music_Check():
         """
@@ -486,7 +485,8 @@ init python in np_util:
         if song is None:
             renpy.music.stop(channel="music", fadeout=fadeout)
         else:
-            if np_globals.Music_Type != "mp3":
+            # 当下载模式1时，无视获取的文件格式，一定为.mp3
+            if np_globals.Music_Type != "mp3" and not store.persistent._np_playmode == 1:
                 mtype = ".wav"
             else:
                 mtype = ".mp3"
