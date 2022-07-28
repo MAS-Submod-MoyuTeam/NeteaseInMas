@@ -11,8 +11,6 @@ init -100:
     default persistent._NP_API_key_able = False
     default persistent._NP_search_limit = "50"
 
-init 999 python:
-    persistent._NP_API_key_able = np_util.Check_API_Available()
 init -5 python in np_globals:
     import store
     import os
@@ -556,12 +554,15 @@ init python in np_screen_util:
                 np.set_text(new_input)
 
 init 999 python:
-    np_globals.Cookies = persistent.np_Cookie
-    np_util.Music_Login_Status()
     try:
         os.mkdir(np_globals.Catch)
     except:
         pass
+    np_globals.Cookies = persistent.np_Cookie
+    if np_util.Check_API_Available():
+        np_util.Music_Login_Status()
+    persistent._NP_API_key_able = np_util.Check_API_Available()
+    
 
 label np_emptylabel():
     pass
