@@ -21,7 +21,7 @@ init -5 python:
     _np_LoginCaptcha = ""
     def np_login_ok():
         result = True
-        if _np_LoginPhone == "" or _np_LoginPw == "":
+        if _np_LoginPhone == "" or (_np_LoginPw == "" and _np_LoginCaptcha == ""):
             renpy.show_screen("np_message", message = "手机号/密码为空")
         else:    
             np_globals._LoginPhone = _np_LoginPhone
