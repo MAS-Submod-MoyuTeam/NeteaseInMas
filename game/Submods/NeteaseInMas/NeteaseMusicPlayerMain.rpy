@@ -327,7 +327,7 @@ init python in np_util:
         np_globals.ReqCod = send.status_code
         if send.status_code == 200:
             np_globals.GetCaptchaTime=time.time()
-            return True
+            return renpy.notify("发送成功，请注意查收")
         else:
             sendjson=send.json()
             try:
