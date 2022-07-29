@@ -286,9 +286,12 @@ init python in np_util:
         import time
         pw = str(pw)
         md5pw = hashlib.md5(pw.encode('utf-8'))
-        url = np_globals.Mainurl + np_globals.PhoneLogin + str(phone) + np_globals.PhoneLoginPwMd5 + md5pw.hexdigest() + "&timestamp={}".format(int(round(time.time()*1000)))
+        url = np_globals.Mainurl + np_globals.PhoneLogin + str(phone)
+        if pw != "" or pw != None:
+            url = url + np_globals.PhoneLoginPwMd5 + md5pw.hexdigest()
         if verifycode != None:
-            url=url+np_globals.PhoneCaptcha+str(verifycode)
+            url=url + np_globals.PhoneCaptcha + str(verifycode)
+        url=url +  + "&timestamp={}".format(int(round(time.time()*1000)))
         login = requests.get(url, verify=np_globals.VerifyPath)
         loginjson = login.json()
         failmessage = ""
