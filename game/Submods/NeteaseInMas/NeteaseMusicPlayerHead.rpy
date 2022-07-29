@@ -18,6 +18,7 @@ init -990 python:
 init -5 python:
     _np_LoginPhone = ""
     _np_LoginPw = ""
+    _np_LoginCaptcha = ""
     def np_login_ok():
         result = True
         if _np_LoginPhone == "" or _np_LoginPw == "":
@@ -25,11 +26,18 @@ init -5 python:
         else:    
             np_globals._LoginPhone = _np_LoginPhone
             np_globals._LoginPw =  _np_LoginPw
-            result = np_util.Music_Login(np_globals._LoginPhone, np_globals._LoginPw)
+            np_globals._LoginCaptcha =  _np_LoginCaptcha
+            if np_globals._LoginCaptcha = "":
+                np_globals._LoginCaptcha = None
+            result = np_util.Music_Login(np_globals._LoginPhone, np_globals._LoginPw, np_globals._LoginCaptcha)
         if not result:
             renpy.show_screen("np_message", message = "登录失败! 请检查账号密码是否正确!")
         renpy.hide_screen("np_login")
     
+    def np_get_phonecaptcha():
+        np_globals._LoginPhone = _np_LoginPhone
+        np_globals.Music_Get_Captcha(np_globals._LoginPhone)
+
     def np_logout_method():
         np_util.Music_Logout()
         renpy.hide_screen("np_logout")
@@ -143,7 +151,7 @@ screen np_login():
             hbox:
                 text "由于服务端API缓存系统, 需要等待2分钟左右等待状态刷新."
             hbox:
-                text "登录后, 可能会显示登陆失败, 如果账户密码正确只需要等待2分钟再刷新即可."
+                text "如果手机验证码不为空，那么密码将失效."
             hbox:
                 text "尽量避免在其他位置登录您的网易云账号, 切勿反复登录:)\n"
 
@@ -153,6 +161,12 @@ screen np_login():
             hbox:
                 textbutton "<点击输入密码>":
                     action Show("np_login_input",message = "请输入密码",returnto = "_np_LoginPw")
+            hbox:
+                textbutton "<点击输入手机验证码>":
+                    action Show("np_login_input",message = "请输入手机验证码",returnto = "_np_LoginCaptcha")
+                label "     "
+                textbutton "<获取验证码>":
+                    action Function(np_get_phonecaptcha)
             hbox:
                 text ""
             hbox:
