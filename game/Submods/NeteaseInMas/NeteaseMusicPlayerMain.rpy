@@ -31,6 +31,10 @@ init -5 python in np_globals:
     PhoneLogin = "/login/cellphone?phone="
     PhoneLoginPw = "&password="
     PhoneLoginPwMd5 = "&md5_password="
+    PhoneCaptcha="&captcha="
+
+    PhoneSendCaptcha="/captcha/sent?phone="
+
     Amonymous="/register/anonimous"
     RefreshLogin = "/login/refresh" #返回新cookie
     LoginStatus = "/login/status"
@@ -82,8 +86,12 @@ init -5 python in np_globals:
     # 其它用处
     _LoginPhone = None
     _LoginPw = None
+    _LoginCaptcha = None
     CatchSize = 12000
     Cookies = None
+
+    # 上次获取验证码时间
+    GetCaptchaTime=0
 
     GlobalSubP = None
 
@@ -110,6 +118,7 @@ init python in np_util:
     import os, sys
     import store.songs as songs
     import urllib2
+    import time
     
     def Check_API_Available():
         """
@@ -272,21 +281,19 @@ init python in np_util:
         cmd = "\"{}\" -i \"{}/{}.flac\" -ab 990k \"{}/{}.wav\" -y".format(np_globals.FFmpegexe, outdir, id, outdir, id)
         a = subprocess.Popen(cmd)
 
-    def Music_Login(phone,pw):
+    def Music_Login(phone,pw,verifycode=None):
         #登录
         import time
         pw = str(pw)
         md5pw = hashlib.md5(pw.encode('utf-8'))
         url = np_globals.Mainurl + np_globals.PhoneLogin + str(phone) + np_globals.PhoneLoginPwMd5 + md5pw.hexdigest() + "&timestamp={}".format(int(round(time.time()*1000)))
+        if verifycode != None:
+            url=url+np_globals.PhoneCaptcha+str(verifycode)
         login = requests.get(url, verify=np_globals.VerifyPath)
         loginjson = login.json()
         failmessage = ""
-        try:
-            failmessage = loginjson["message"]
-        except:
-            pass
-        if failmessage == "当前登录存在安全风险，请稍后再试":
-            renpy.notify("API可能已被风控, 请更换API或尝试更新你fork的网易云音乐存储库")
+        if login.status_code != 200:
+            renpy.notify("登录错误代码 - {}\n请考虑更换API/等待API风控结束/使用短信验证码/更新API".format(login.status_code))
         np_globals.Cookies = login.cookies
         store.persistent.np_Cookie = login.cookies
         Music_Login_Status()
@@ -300,6 +307,34 @@ init python in np_util:
         np_globals.Cookies = new_cookies
         store.persistent.np_Cookie = new_cookies
     
+    def Music_Get_Captcha(phone):
+        """
+        获取验证码
+        因为API会缓存访问结果，所以大概不需要做快速发送验证
+
+        return:
+            是否成功
+        """
+        # 如果发送时间间隔<60，阻止发送
+        if np_globals.GetCaptchaTime - time.time() < 60:
+            renpy.notify("发送失败：发送太频繁，请等待{}后重试".format(np_globals.GetCaptchaTime - time.time()))
+            return False
+        url=np_globals.Mainurl + np_globals.PhoneCaptcha + str(phone) + "&timestamp={}".format(int(round(time.time()*1000)))
+        send=requests.get(url)
+        np_globals.ReqCod = send.status_code
+        if send.status_code == 200:
+            np_globals.GetCaptchaTime=time.time()
+            return True
+        else:
+            sendjson=send.json()
+            try:
+                renpy.notify("发送失败：{}".format(sendjson['message']))
+            except:
+                renpy.notify("发送失败：{}".format(sendjson['code']))
+            return False
+
+
+
     def Music_Login_Status():
         """
         检查登陆状态, 离线返回False, 在线返回昵称
