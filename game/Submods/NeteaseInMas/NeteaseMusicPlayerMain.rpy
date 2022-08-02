@@ -35,6 +35,8 @@ init -5 python in np_globals:
 
     PhoneSendCaptcha="/captcha/sent?phone="
 
+    realIP="&realIP="
+
     Amonymous="/register/anonimous"
     RefreshLogin = "/login/refresh" #返回新cookie
     LoginStatus = "/login/status"
@@ -93,6 +95,9 @@ init -5 python in np_globals:
     # 上次获取验证码时间
     GetCaptchaTime=0
 
+    # ip
+    Outip=""
+
     GlobalSubP = None
 
     ReqCode = 0
@@ -119,6 +124,7 @@ init python in np_util:
     import store.songs as songs
     import urllib2
     import time
+    from store import debug_msg
     
     def Check_API_Available():
         """
@@ -281,19 +287,24 @@ init python in np_util:
         cmd = "\"{}\" -i \"{}/{}.flac\" -ab 990k \"{}/{}.wav\" -y".format(np_globals.FFmpegexe, outdir, id, outdir, id)
         a = subprocess.Popen(cmd)
 
+    def Get_OutIp():
+        np_globals.Outip=requests.get('http://ifconfig.me/ip', timeout=1).text.strip()
+        return np_globals.Outip
+
     def Music_Login(phone,pw,verifycode=None):
         #登录
         import time
         pw = str(pw)
         md5pw = hashlib.md5(pw.encode('utf-8'))
         url = np_globals.Mainurl + np_globals.PhoneLogin + str(phone)
-        if pw != "" or pw != None:
+        if not pw == "":
             url = url + np_globals.PhoneLoginPwMd5 + md5pw.hexdigest()
         if verifycode != None:
-            url=url + np_globals.PhoneCaptcha + str(verifycode)
-        url=url +  + "&timestamp={}".format(int(round(time.time()*1000)))
+            url= url + np_globals.PhoneCaptcha + str(verifycode)
+        url=url + "&timestamp={}".format(int(round(time.time()*1000)))+np_globals.realIP+np_globals.Outip
         login = requests.get(url, verify=np_globals.VerifyPath)
         loginjson = login.json()
+        debug_msg(url, str(loginjson))
         failmessage = ""
         if login.status_code != 200:
             renpy.notify("登录错误代码 - {}\n请考虑更换API/等待API风控结束/使用短信验证码/更新API".format(login.status_code))
@@ -319,11 +330,11 @@ init python in np_util:
             是否成功
         """
         # 如果发送时间间隔<60，阻止发送
-        if np_globals.GetCaptchaTime - time.time() < 60:
-            renpy.notify("发送失败：发送太频繁，请等待{}后重试".format(np_globals.GetCaptchaTime - time.time()))
+        if (time.time() - np_globals.GetCaptchaTime) < 60:
+            renpy.notify("发送失败：发送太频繁，请等待{}s后重试".format(60 - (time.time() - np_globals.GetCaptchaTime)))
             return False
-        url=np_globals.Mainurl + np_globals.PhoneCaptcha + str(phone) + "&timestamp={}".format(int(round(time.time()*1000)))
-        send=requests.get(url)
+        url=np_globals.Mainurl + np_globals.PhoneSendCaptcha + str(phone) + "&timestamp={}".format(int(round(time.time()*1000)))
+        send=requests.get(url, verify=np_globals.VerifyPath)
         np_globals.ReqCod = send.status_code
         if send.status_code == 200:
             np_globals.GetCaptchaTime=time.time()
@@ -599,6 +610,7 @@ init 999 python:
     np_globals.Cookies = persistent.np_Cookie
     if np_util.Check_API_Available():
         np_util.Music_Login_Status()
+    np_util.Get_OutIp()
     persistent._NP_API_key_able = np_util.Check_API_Available()
     
 

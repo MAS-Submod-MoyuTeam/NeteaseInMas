@@ -14,6 +14,15 @@ init -990 python:
         version='1.3.5',
         settings_pane="np_setting_pane"
     )
+init -989 python:
+    if store.mas_submod_utils.isSubmodInstalled("Submod Updater Plugin"):
+        store.sup_utils.SubmodUpdater(
+            submod="Netease Music",
+            user_name="MAS-Submod-MoyuTeam",
+            repository_name="NeteaseInMas",
+            update_dir="",
+            attachment_id=None
+        )
 
 init -5 python:
     _np_LoginPhone = ""
@@ -27,7 +36,7 @@ init -5 python:
             np_globals._LoginPhone = _np_LoginPhone
             np_globals._LoginPw =  _np_LoginPw
             np_globals._LoginCaptcha =  _np_LoginCaptcha
-            if np_globals._LoginCaptcha = "":
+            if np_globals._LoginCaptcha == "":
                 np_globals._LoginCaptcha = None
             result = np_util.Music_Login(np_globals._LoginPhone, np_globals._LoginPw, np_globals._LoginCaptcha)
         if not result:
@@ -36,7 +45,7 @@ init -5 python:
     
     def np_get_phonecaptcha():
         np_globals._LoginPhone = _np_LoginPhone
-        np_globals.Music_Get_Captcha(np_globals._LoginPhone)
+        np_util.Music_Get_Captcha(np_globals._LoginPhone)
 
     def np_logout_method():
         np_util.Music_Logout()
@@ -151,7 +160,7 @@ screen np_login():
             hbox:
                 text "由于服务端API缓存系统, 需要等待2分钟左右等待状态刷新."
             hbox:
-                text "如果手机验证码不为空，那么密码将失效."
+                text "如果手机验证码不为空，那么密码将失效. 切勿乱点，每天验证码条数极为有限"
             hbox:
                 text "尽量避免在其他位置登录您的网易云账号, 切勿反复登录:)\n"
 
