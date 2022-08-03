@@ -603,15 +603,17 @@ init python in np_screen_util:
                 np.set_text(new_input)
 
 init 999 python:
-    try:
-        os.mkdir(np_globals.Catch)
-    except:
-        pass
     np_globals.Cookies = persistent.np_Cookie
     if np_util.Check_API_Available():
         np_util.Music_Login_Status()
     np_util.Get_OutIp()
     persistent._NP_API_key_able = np_util.Check_API_Available()
+
+init -300 python:
+    try:
+        os.mkdir(renpy.config.basedir + "/game/Submods/NeteaseInMas/Catch")
+    except:
+        pass
     
 
 label np_emptylabel():
