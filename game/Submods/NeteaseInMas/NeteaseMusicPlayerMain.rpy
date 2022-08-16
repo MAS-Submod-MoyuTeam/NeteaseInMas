@@ -604,10 +604,16 @@ init python in np_screen_util:
 
 init 999 python:
     np_globals.Cookies = persistent.np_Cookie
-    if np_util.Check_API_Available():
-        np_util.Music_Login_Status()
-    np_util.Get_OutIp()
-    persistent._NP_API_key_able = np_util.Check_API_Available()
+    try:
+        if np_util.Check_API_Available():
+            np_util.Music_Login_Status()
+            persistent._NP_API_key_able = True
+            np_util.Get_OutIp()
+        else:
+            persistent._NP_API_key_able = False
+    except Exception as e:
+        persistent._NP_API_key_able = False
+        store.mas_submod_utils.submod_log.info("初始化连接时发生异常：{}".format(e))
 
 init -300 python:
     try:
