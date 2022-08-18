@@ -33,7 +33,7 @@ init 100:
                     xsize 170
                     ysize 35
                     style "hkb_button"
-                    action Jump('np_loop')
+                    action Function(np_loopplay)
                     
                 textbutton _("搜索"):
                     xsize 170

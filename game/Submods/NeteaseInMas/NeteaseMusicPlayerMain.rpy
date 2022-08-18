@@ -491,7 +491,9 @@ init python in np_util:
         dirs = os.listdir(np_globals.Catch)
         catched = []
         for file_name in dirs:
-            catched.append((np_globals.Catch + "/" +file_name).replace("\\","/"))
+            for types in ["mp3", "wav"]:
+                if file_name.find(types) != -1:
+                    catched.append((np_globals.Catch + "/" +file_name).replace("\\","/"))
         return catched
     
     def Music_Play_List(song=Music_GetCatchSaveList(), fadein=1.2, loop=True, set_per=False, fadeout=1.2, if_changed=False):
