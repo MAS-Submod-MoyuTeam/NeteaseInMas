@@ -132,10 +132,10 @@ label np_play_musicid:
             if np_globals.debug:
                 m 1esa "预计时间:[wtime]{nw}"
             if np_globals.Music_Type != "mp3":
-                if persistent._np_conmode == NP_CONMODE_MP3 or persistent._np_playmode == NP_DOWNMODE1:
-                    $ np_util.Music_ToMp3()
-                else:
-                    $ np_util.Music_ToWav()
+                #if persistent._np_playmode == 1 and persistent._np_playmode == 1:
+                #    $ np_util.Music_ToMp3()
+                #else:
+                $ np_util.Music_ToWav()
                 m 1eua "接下来...等音乐转码完就好了...{w=[wtime]}{nw}"
             
         python:
@@ -147,7 +147,7 @@ label np_play_musicid:
                 try:
                     np_util.Music_Play(np_globals.Music_Id)
                     playable = True
-                except IOError:
+                except:
                     renpy.notify("转码时间比预计要长一些...\n最多重试[persistent._np_max_retry]次")
                     retry = retry + 1
                     time.sleep(1.5)
@@ -253,8 +253,8 @@ label np_show_setting:
             "song/id对于部分歌曲(需要VIP)可能只能播放试听片段"
             "song/id的加载速度更快"
             "song/download/id的音质比song/id更好"
-            "如果你能登录，请优先使用song/download/id，song/id返回的歌曲类型可能和实际类型不一致"
-            "两者都无法播放非版权音乐和需要黑胶VIP的音乐"
+            "如果你能登录，请优先使用song/download/id, song/id在登录/非登录状态可能有两种类型，可能更容易出bug"
+            "两者都无法播放无版权音乐和需要黑胶VIP的音乐"
             menu:
                 "请选择播放模式, 当前为[mode]"
                 "song/id":
