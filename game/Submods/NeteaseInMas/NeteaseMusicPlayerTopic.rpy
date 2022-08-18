@@ -147,7 +147,7 @@ label np_play_musicid:
                 try:
                     np_util.Music_Play(np_globals.Music_Id)
                     playable = True
-                except:
+                except IOError:
                     renpy.notify("转码时间比预计要长一些...\n最多重试[persistent._np_max_retry]次")
                     retry = retry + 1
                     time.sleep(1.5)
