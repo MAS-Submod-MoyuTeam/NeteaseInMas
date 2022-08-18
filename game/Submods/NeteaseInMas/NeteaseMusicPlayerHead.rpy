@@ -182,7 +182,7 @@ screen np_login():
 
             hbox:
                 textbutton "<点击输入手机号/163邮箱>":
-                    action Show("np_login_input",message = "请输入手机号",returnto = "_np_LoginPhone")
+                    action Show("np_login_input",message = "请输入手机号/163邮箱",returnto = "_np_LoginPhone")
             hbox:
                 textbutton "<点击输入密码>":
                     action Show("np_login_input",message = "请输入密码",returnto = "_np_LoginPw")
