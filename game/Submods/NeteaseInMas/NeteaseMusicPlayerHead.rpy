@@ -11,7 +11,7 @@ init -990 python:
         author="P",
         name="Netease Music",
         description="在MAS里播放来自网易云的音乐.\n强烈建议使用{a=https://github.com/Legendkiller21/MAS-Submods-Paste}{i}{u}Paste{/u}{/i}{/a}子模组来进行复制粘贴操作。",
-        version='1.3.9',
+        version='1.4.0',
         settings_pane="np_setting_pane"
     )
 init -989 python:
@@ -42,6 +42,22 @@ init -5 python:
         if not result:
             renpy.show_screen("np_message", message = "登录失败! 请检查账号密码是否正确!")
         renpy.hide_screen("np_login")
+    
+    def np_login_ok_e():
+        result = True
+        if _np_LoginPhone == "" or (_np_LoginPw == ""):
+            renpy.show_screen("np_message", message = "邮箱/密码为空")
+        else:    
+            np_globals._LoginPhone = _np_LoginPhone
+            np_globals._LoginPw =  _np_LoginPw
+            np_globals._LoginCaptcha =  _np_LoginCaptcha
+            if np_globals._LoginCaptcha == "":
+                np_globals._LoginCaptcha = None
+            result = np_util.Music_Login_e(np_globals._LoginPhone, np_globals._LoginPw, np_globals._LoginCaptcha)
+        if not result:
+            renpy.show_screen("np_message", message = "登录失败! 请检查账号密码是否正确!")
+        renpy.hide_screen("np_login")
+
     
     def np_get_phonecaptcha():
         np_globals._LoginPhone = _np_LoginPhone
@@ -165,7 +181,7 @@ screen np_login():
                 text "尽量避免在其他位置登录您的网易云账号, 切勿反复登录:)\n"
 
             hbox:
-                textbutton "<点击输入手机号>":
+                textbutton "<点击输入手机号/163邮箱>":
                     action Show("np_login_input",message = "请输入手机号",returnto = "_np_LoginPhone")
             hbox:
                 textbutton "<点击输入密码>":
@@ -179,8 +195,10 @@ screen np_login():
             hbox:
                 text ""
             hbox:
-                textbutton "登录":
+                textbutton "手机登录":
                     action Function(np_login_ok)
+                textbutton "邮箱登录":
+                    action Function(np_login_ok_e)
                 textbutton "关闭":
                     action Hide("np_login")
 

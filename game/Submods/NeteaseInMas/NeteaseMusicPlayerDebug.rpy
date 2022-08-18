@@ -5,11 +5,6 @@ init 999 python:
         np_globals.Mainurl = "https://netease-cloud-music-api-imited.vercel.app"
 init -4 python:
     _np_music_id = ""
-    def debug_msg(msg, respond="未提供"):
-        msg1 = "[NeteaseInMas] - 测试模式 -> API: {}:".format(np_globals.Mainurl)
-        if np_globals.debug:
-            store.mas_submod_utils.submod_log.info("{}\n获取Get: {}\n回应Respond: {}".format(msg1, respond))
-
     def np_debug_check():
         res = np_util.Music_Login_Status()
         str1 = ""

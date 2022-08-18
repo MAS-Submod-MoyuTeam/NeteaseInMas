@@ -35,6 +35,8 @@ init -5 python in np_globals:
 
     PhoneSendCaptcha="/captcha/sent?phone="
 
+    EmailLogin = "/login?email="
+
     realIP="&realIP="
 
     Amonymous="/register/anonimous"
@@ -124,7 +126,7 @@ init python in np_util:
     import store.songs as songs
     import urllib2
     import time
-    from store import debug_msg
+    from store.mas_submod_utils import submod_log
     
     def Check_API_Available():
         """
@@ -304,10 +306,35 @@ init python in np_util:
         url=url + "&timestamp={}".format(int(round(time.time()*1000)))+np_globals.realIP+np_globals.Outip
         login = requests.get(url, verify=np_globals.VerifyPath)
         loginjson = login.json()
-        debug_msg(url, str(loginjson))
+        submod_log.debug("url:{}".format(url))
+        submod_log.debug("respond:{}".format(str(loginjson)))
         failmessage = ""
         if login.status_code != 200:
             renpy.notify("登录错误代码 - {}\n请考虑更换API/等待API风控结束/使用短信验证码/更新API".format(login.status_code))
+        np_globals.Cookies = login.cookies
+        store.persistent.np_Cookie = login.cookies
+        Music_Login_Status()
+        return np_globals.Np_Status
+
+    def Music_Login_e(phone,pw,verifycode=None):
+        #登录
+        import time
+        pw = str(pw)
+        md5pw = hashlib.md5(pw.encode('utf-8'))
+        url = np_globals.Mainurl + np_globals.EmailLogin + str(phone)
+        if not pw == "":
+            url = url + np_globals.PhoneLoginPwMd5 + md5pw.hexdigest()
+        if verifycode != None:
+            pass
+            #url= url + np_globals.PhoneCaptcha + str(verifycode)
+        url=url + "&timestamp={}".format(int(round(time.time()*1000)))+np_globals.realIP+np_globals.Outip
+        login = requests.get(url, verify=np_globals.VerifyPath)
+        loginjson = login.json()
+        submod_log.debug("url:{}".format(url))
+        submod_log.debug("respond:{}".format(str(loginjson)))
+        failmessage = ""
+        if login.status_code != 200:
+            renpy.notify("登录错误代码 - {}\n请考虑更换API/等待API风控结束/使用短信验证码/更新API\n查看submod_log可以查看详细信息".format(login.status_code))
         np_globals.Cookies = login.cookies
         store.persistent.np_Cookie = login.cookies
         Music_Login_Status()
@@ -533,7 +560,7 @@ init python in np_util:
             renpy.music.stop(channel="music", fadeout=fadeout)
         else:
             # 当下载模式1时，无视获取的文件格式，一定为.mp3
-            if np_globals.Music_Type != "mp3" and not store.persistent._np_playmode == 1:
+            if np_globals.Music_Type != "mp3":
                 mtype = ".wav"
             else:
                 mtype = ".mp3"
