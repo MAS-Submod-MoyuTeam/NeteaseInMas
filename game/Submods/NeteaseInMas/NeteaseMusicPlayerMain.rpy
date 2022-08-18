@@ -642,15 +642,7 @@ init 999 python:
         persistent._NP_API_key_able = False
         store.mas_submod_utils.submod_log.info("初始化连接时发生异常：{}".format(e))
 
-init 300 python:
-    try:
-        for file_name in dirs:
-            if file_name.find('git') != -1:
-                file = np_globals.Catch + "/" + file_name
-                os.remove(file)
-                break
-    except:
-        pass
+init -900 python:
     try:
         os.mkdir(renpy.config.basedir + "/game/Submods/NeteaseInMas/Catch")
     except:
