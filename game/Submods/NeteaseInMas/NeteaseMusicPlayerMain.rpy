@@ -644,6 +644,11 @@ init 999 python:
 
 init -300 python:
     try:
+        file = np_globals.Catch + "/" + ".gitkeep"
+        os.remove(file)
+    except:
+        pass
+    try:
         os.mkdir(renpy.config.basedir + "/game/Submods/NeteaseInMas/Catch")
     except:
         pass

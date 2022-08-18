@@ -30,12 +30,12 @@ init 5 python:
         restartBlacklist=True
         )
 label np_loop:
+    $ hide_extra_screen()
     $ np_util.Music_Play_List()
     m "ok"
     return
+
 label np_search:
-    if store.mas_extramenu.menu_visible:
-        call mas_extra_menu_close
     $ response_quips = [
         "想听什么?",
         "[player], 今天想听什么呢?",
@@ -174,6 +174,7 @@ label np_play_musicid:
     else:
         m "似乎出了一些意外问题..."
         m "重试一下吧, [player]"
+    show monika idle
     return
 init 5 python:
     addEvent(

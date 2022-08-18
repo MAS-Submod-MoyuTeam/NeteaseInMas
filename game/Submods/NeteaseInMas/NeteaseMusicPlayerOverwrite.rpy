@@ -23,29 +23,38 @@ init 100:
                     text_style "mas_extra_menu_label_text"
                     xalign 0.5
                 textbutton _("我喜欢的音乐"):
-                    xsize 175
+                    xsize 170
                     ysize 35
                     style "hkb_button"
                     action Function(np_extra_musiclist)
+
+
                 textbutton _("循环播放缓存"):
-                    xsize 175
+                    xsize 170
                     ysize 35
                     style "hkb_button"
-                    action Function(np_loopplay)
+                    action Jump('np_loop')
+                    
+                textbutton _("搜索"):
+                    xsize 170
+                    ysize 35
+                    style "hkb_button"
+                    action Function(np_search_topic)
                 hbox:
                     textbutton _("播放"):
-                        xsize 80
+                        xsize 77
                         ysize 35
                         style "hkb_button"
                         action Function(np_resume)
                     label "":
-                        xsize 15
+                        xsize 14
                         ysize 35
                     textbutton _("暂停"):
-                        xsize 80
+                        xsize 77
                         ysize 35
                         style "hkb_button"
                         action Function(np_pause)
+
                     
             # zoom control
         frame:
@@ -71,18 +80,39 @@ init 100:
                 $ store.mas_sprites.adjust_zoom()
 
     python:
+        def hide_extra_screen():
+            store.mas_extramenu.menu_visible = False
+            renpy.hide_screen("mas_extramenu_area")
+            if store.mas_sprites.zoom_level != prev_zoom:
+                renpy.call("mas_extra_menu_zoom_callback")
+            # re-enable overlays
+            if store.mas_globals.in_idle_mode:
+                mas_coreToIdleShield()
+            else:
+                mas_DropShield_core()
         def np_extra_musiclist():
+            hide_extra_screen()
             renpy.call('np_show_userplaylist')
-            renpy.call('mas_extra_menu_close_p1')
             renpy.jump('mas_extra_menu_close_p2')
+
+        def np_search_topic():
+            hide_extra_screen()
+            renpy.call("np_search")
+            renpy.jump('mas_extra_menu_close_p2')
+
         def np_loopplay():
+            hide_extra_screen()
             renpy.call('np_loop')
+            renpy.jump('mas_extra_menu_close_p2')
+
         def np_pause():
             renpy.music.set_pause(True)
             np_paused=True
         def np_resume():
             renpy.music.set_pause(False)
             np_paused=False
+
+
 
 label mas_extra_menu_close_p1:
     $ store.mas_extramenu.menu_visible = False
