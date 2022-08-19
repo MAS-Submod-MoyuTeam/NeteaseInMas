@@ -4,14 +4,14 @@
 #            - 刷新登录缓存 X - 无法实现
 #            - 正在播放
 #            - 清除下载歌曲
-define DEFAULT_NP_API = "https://netease-cloud-music-api-murex-gamma.vercel.app"
+define DEFAULT_NP_API = ""#"https://netease-cloud-music-api-murex-gamma.vercel.app"
 
 init -990 python:
     store.mas_submod_utils.Submod(
         author="P",
         name="Netease Music",
         description="在MAS里播放来自网易云的音乐.\n强烈建议使用{a=https://github.com/Legendkiller21/MAS-Submods-Paste}{i}{u}Paste{/u}{/i}{/a}子模组来进行复制粘贴操作。",
-        version='1.4.0',
+        version='1.4.1',
         settings_pane="np_setting_pane"
     )
 init -989 python:
