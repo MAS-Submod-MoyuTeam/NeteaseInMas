@@ -11,7 +11,7 @@ init -990 python:
         author="P",
         name="Netease Music",
         description="在MAS里播放来自网易云的音乐.\n强烈建议使用{a=https://github.com/Legendkiller21/MAS-Submods-Paste}{i}{u}Paste{/u}{/i}{/a}子模组来进行复制粘贴操作。",
-        version='1.4.1',
+        version='1.5.0',
         settings_pane="np_setting_pane"
     )
 init -989 python:
@@ -91,6 +91,7 @@ init -5 python:
     np_buttontip_forcerefresh = "强制检测登录状态"
     np_buttontip_logout = "登出网易云音乐"
     np_buttontip_playermusiclist = "获取登录用户的'我喜欢'歌单"
+    np_buttontip_refreshcookie = "用于刷新Cookies的有效时间"
 
 screen np_setting_pane():
     python:
@@ -148,6 +149,12 @@ screen np_setting_pane():
                     hovered SetField(np_screen_tt, "value", np_buttontip_playermusiclist)
                     unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
                     action Function(np_get_ml)
+                textbutton "> 手动保存Cookies":
+                    action Function(np_save_cookies)
+                textbutton "> 手动刷新Cookies":
+                    hovered SetField(np_screen_tt, "value", np_buttontip_refreshcookie)
+                    unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
+                    action Function(np_refresh_cookies)
         
         textbutton "> 安全性问题说明":
             action Show("np_message", message = warn_message)
