@@ -24,9 +24,10 @@ init -5 python in np_globals:
     FFmpegDir =  Basedir + "/game/Submods/NeteaseInMas/ffmpeg/win32/usr/bin"
     FFmpegexe = FFmpegDir + "/ffmpeg"
     VerifyPath = False # Basedir + "/game/python-packages/certifi/cacert.pem"
+    CookiesPath = Basedir + "/game/Submods/NeteaseInMas/Cookies/cookies.json"
 
     ######################## API
-    Mainurl = "https://netease-cloud-music-api-murex-gamma.vercel.app"
+    Mainurl = "http://neteaseapi.0721play.icu"
 
     PhoneLogin = "/login/cellphone?phone="
     PhoneLoginPw = "&password="
@@ -93,7 +94,7 @@ init -5 python in np_globals:
     _LoginCaptcha = None
     CatchSize = 12000
     Cookies = None
-
+    Header={'Connection':'close'}
     # 上次获取验证码时间
     GetCaptchaTime=0
 
@@ -115,6 +116,7 @@ init python in np_util:
     from urllib import quote
     import json
     import requests
+    import requests.utils as requtils
     import ssl
     #import renpy
     import store
@@ -127,14 +129,54 @@ init python in np_util:
     import urllib2
     import time
     from store.mas_submod_utils import submod_log
+
     
+    def Save_Cookies(cookies):
+        """
+        保存Cookies
+        IN:
+            要保存的RequestsCookieJar
+        """
+        cookiesDict = requtils.dict_from_cookiejar(cookies)
+        with open(np_globals.CookiesPath, 'w') as cookie:
+            json.dump(cookiesDict, cookie)
+
+    def Save_Cookies_From_Dict(cookies):
+        """
+        保存Cookies, 但是字典形式
+        IN:
+            要保存的字典
+        """
+        with open(np_globals.CookiesPath, 'w') as cookie:
+            json.dump(cookies, cookie)
+    
+    def Load_Cookies():
+        """
+        从CookiesPath读取Cookies，保存至np_globals.Cookies
+        """
+        try:
+            with open(np_globals.CookiesPath, 'r') as cookie:
+                cookiesDict = json.load(cookie)
+            np_globals.Cookies = requtils.cookiejar_from_dict(cookiesDict)
+        except:
+            np_globals.Cookies = None
+    
+    def Remove_Cookies():
+        """
+        删除Cookies文件
+        """
+        try:
+            os.remove(np_globals.CookiesPath)
+        except:
+            pass
+
     def Check_API_Available():
         """
         检测API可用性
         return:
             True/False
         """
-        API = requests.get(np_globals.Mainurl, verify = np_globals.VerifyPath)
+        API = requests.get(np_globals.Mainurl, verify = np_globals.VerifyPath, headers=np_globals.Header)
         np_globals.ReqCode = API.status_code
         if API.status_code != 200:
             return False
@@ -157,11 +199,11 @@ init python in np_util:
 
         id = str(np_globals.Np_UserId)
         url = np_globals.Mainurl + np_globals.UserPlaylist + id
-        plidr = requests.get(url, cookies = np_globals.Cookies, verify = np_globals.VerifyPath)
+        plidr = requests.get(url, cookies = np_globals.Cookies, verify = np_globals.VerifyPath, headers=np_globals.Header)
         plidj = plidr.json()
         plid = str(plidj["playlist"][0]["id"])
         url2 = np_globals.Mainurl + np_globals.PlaylistDetail + plid
-        getmusiclist = requests.get(url2, cookies = cookie , verify = np_globals.VerifyPath)
+        getmusiclist = requests.get(url2, cookies = cookie , verify = np_globals.VerifyPath, headers=np_globals.Header)
         mlist = getmusiclist.json()
         for song in mlist['playlist']["tracks"]:
             id = str(song["id"])
@@ -213,7 +255,7 @@ init python in np_util:
         res = list()
         keyword = urllib2.quote(keyword.encode('utf-8'))
         url = np_globals.Mainurl + np_globals.Search + keyword + np_globals.SearchToLimit
-        search = requests.get(url, verify = np_globals.VerifyPath)
+        search = requests.get(url, verify = np_globals.VerifyPath, headers=np_globals.Header)
         result = search.json()
         for song in result["result"]["songs"]:
             id = str(song["id"])
@@ -243,7 +285,7 @@ init python in np_util:
         if id == None or id == "":
             id = str(np_globals.Music_Id)
         url = np_globals.Mainurl + np_globals.MusicDetail + id
-        info = requests.post(url, verify = np_globals.VerifyPath)
+        info = requests.get(url, verify = np_globals.VerifyPath, headers=np_globals.Header)
         infodata = info.json()
         np_globals.Music_Name = infodata["songs"][0]["name"]
         np_globals.Music_Author = infodata["songs"][0]["ar"][0]["name"]
@@ -290,7 +332,7 @@ init python in np_util:
         a = subprocess.Popen(cmd)
 
     def Get_OutIp():
-        np_globals.Outip=requests.get('http://ifconfig.me/ip', timeout=1).text.strip()
+        np_globals.Outip=requests.get('http://ifconfig.me/ip', headers=np_globals.Header).text.strip()
         return np_globals.Outip
 
     def Music_Login(phone,pw,verifycode=None):
@@ -304,7 +346,7 @@ init python in np_util:
         if verifycode != None:
             url= url + np_globals.PhoneCaptcha + str(verifycode)
         url=url + "&timestamp={}".format(int(round(time.time()*1000)))+np_globals.realIP+np_globals.Outip
-        login = requests.get(url, verify=np_globals.VerifyPath)
+        login = requests.get(url, verify=np_globals.VerifyPath, headers=np_globals.Header)
         loginjson = login.json()
         submod_log.debug("url:{}".format(url))
         submod_log.debug("respond:{}".format(str(loginjson)))
@@ -312,7 +354,7 @@ init python in np_util:
         if login.status_code != 200:
             renpy.notify("登录错误代码 - {}\n请考虑更换API/等待API风控结束/使用短信验证码/更新API".format(login.status_code))
         np_globals.Cookies = login.cookies
-        store.persistent.np_Cookie = login.cookies
+        Save_Cookies()
         Music_Login_Status()
         return np_globals.Np_Status
 
@@ -328,7 +370,7 @@ init python in np_util:
             pass
             #url= url + np_globals.PhoneCaptcha + str(verifycode)
         url=url + "&timestamp={}".format(int(round(time.time()*1000)))+np_globals.realIP+np_globals.Outip
-        login = requests.get(url, verify=np_globals.VerifyPath)
+        login = requests.get(url, verify=np_globals.VerifyPath, headers=np_globals.Header)
         loginjson = login.json()
         submod_log.debug("url:{}".format(url))
         submod_log.debug("respond:{}".format(str(loginjson)))
@@ -336,18 +378,18 @@ init python in np_util:
         if login.status_code != 200:
             renpy.notify("登录错误代码 - {}\n请考虑更换API/等待API风控结束/使用短信验证码/更新API\n查看submod_log可以查看详细信息".format(login.status_code))
         np_globals.Cookies = login.cookies
-        store.persistent.np_Cookie = login.cookies
+        Save_Cookies(np_globals.Cookies)
         Music_Login_Status()
         return np_globals.Np_Status
  
     def Music_Login_Refresh():
         #刷新登录
         url = np_globals.Mainurl + np_globals.RefreshLogin
-        refresh = requests.get(url, cookies=np_globals.Cookies, verify = np_globals.VerifyPath)
+        refresh = requests.get(url, cookies=np_globals.Cookies, verify = np_globals.VerifyPath, headers=np_globals.Header)
         new_cookies = refresh.cookies
-        np_globals.Cookies = new_cookies
-        store.persistent.np_Cookie = new_cookies
-    
+        np_globals.Cookies.update(new_cookies)
+        Save_Cookies()
+        
     def Music_Get_Captcha(phone):
         """
         获取验证码
@@ -361,7 +403,7 @@ init python in np_util:
             renpy.notify("发送失败：发送太频繁，请等待{}s后重试".format(60 - (time.time() - np_globals.GetCaptchaTime)))
             return False
         url=np_globals.Mainurl + np_globals.PhoneSendCaptcha + str(phone) + "&timestamp={}".format(int(round(time.time()*1000)))
-        send=requests.get(url, verify=np_globals.VerifyPath)
+        send=requests.get(url, verify=np_globals.VerifyPath, headers=np_globals.Header)
         np_globals.ReqCod = send.status_code
         if send.status_code == 200:
             np_globals.GetCaptchaTime=time.time()
@@ -383,7 +425,7 @@ init python in np_util:
         import time
         cookie = np_globals.Cookies
         url = np_globals.Mainurl + np_globals.LoginStatus + "?&timestamp={}".format(int(time.time()*1000))
-        check = requests.get(url, cookies = cookie, verify = np_globals.VerifyPath)
+        check = requests.get(url, cookies = cookie, verify = np_globals.VerifyPath, headers=np_globals.Header)
         np_globals.ReqCode = check.status_code
         result = check.json()
         try:
@@ -409,11 +451,12 @@ init python in np_util:
         """
         cookie = np_globals.Cookies
         url = np_globals.Mainurl + np_globals.Logout
-        requests.get(url, cookies = cookie, verify = np_globals.VerifyPath)
+        requests.get(url, cookies = cookie, verify = np_globals.VerifyPath, headers=np_globals.Header)
         np_globals.Cookies = None
         np_globals.Np_NickName = "Unlogin - 未登录"
         np_globals.Np_Status = False
         store.persistent.np_Cookie = None
+        Remove_Cookies()
         #renpy.jump("np_emptylabel")
 
 
@@ -422,7 +465,7 @@ init python in np_util:
         id = str(id)
         cookie = np_globals.Cookies
         url = np_globals.Mainurl + np_globals.MusicDownloadurl + id
-        music = requests.get(url, cookies = cookie, verify=np_globals.VerifyPath)
+        music = requests.get(url, cookies = cookie, verify=np_globals.VerifyPath, headers=np_globals.Header)
         try:
             getdata = music.json()
         except Exception:
@@ -432,7 +475,7 @@ init python in np_util:
         np_globals.Music_Type = getdata['data']['type']
         if file_url is None:
             return False
-        _music_download = requests.get(file_url,cookies = cookie, verify=np_globals.VerifyPath, stream=True)
+        _music_download = requests.get(file_url,cookies = cookie, verify=np_globals.VerifyPath, stream=True, headers=np_globals.Header)
         _flac = open(np_globals.Catch + "/" + id + "." + np_globals.Music_Type, 'wb')
         for chunk in _music_download.iter_content(chunk_size = np_globals.CatchSize):
             if chunk:
@@ -446,7 +489,7 @@ init python in np_util:
         id = str(id)
         cookie = np_globals.Cookies
         url = np_globals.Mainurl + np_globals.MusicDownloadurl2 + id
-        music = requests.get(url, cookies = cookie, verify=np_globals.VerifyPath)
+        music = requests.get(url, cookies = cookie, verify=np_globals.VerifyPath, headers=np_globals.Header)
         try:
             getdata = music.json()
         except Exception:
@@ -456,7 +499,7 @@ init python in np_util:
         np_globals.Music_Type = getdata['data'][0]['type']
         if file_url == None:
             return False
-        _music_download = requests.get(file_url,cookies = cookie, verify=np_globals.VerifyPath, stream=True)
+        _music_download = requests.get(file_url,cookies = cookie, verify=np_globals.VerifyPath, stream=True, headers=np_globals.Header)
         _flac = open(np_globals.Catch + "/" + id + "." + np_globals.Music_Type, 'wb')
         for chunk in _music_download.iter_content(chunk_size = np_globals.CatchSize):
             if chunk:
@@ -469,7 +512,7 @@ init python in np_util:
         返回bool
         """
         url = np_globals.Mainurl + np_globals.MusicCheck + np_globals.Music_Id
-        res = requests.get(url, verify = np_globals.VerifyPath)
+        res = requests.get(url, verify = np_globals.VerifyPath, headers=np_globals.Header)
         r = res.json()
         return r['success']
 
@@ -561,7 +604,6 @@ init python in np_util:
         if song is None:
             renpy.music.stop(channel="music", fadeout=fadeout)
         else:
-            # 当下载模式1时，无视获取的文件格式，一定为.mp3
             if np_globals.Music_Type != "mp3":
                 mtype = ".wav"
             else:
@@ -632,7 +674,11 @@ init python in np_screen_util:
                 np.set_text(new_input)
 
 init 999 python:
-    np_globals.Cookies = persistent.np_Cookie
+    if persistent.np_Cookie is not None:
+        np_globals.Cookies = persistent.np_Cookie
+        persistent.np_Cookie = None
+    else:
+        np_globals.Cookies = np_utils.Load_Cookies()
     try:
         if np_util.Check_API_Available():
             np_util.Music_Login_Status()
@@ -641,12 +687,24 @@ init 999 python:
         else:
             persistent._NP_API_key_able = False
     except Exception as e:
-        persistent._NP_API_key_able = False
-        store.mas_submod_utils.submod_log.info("初始化连接时发生异常：{}".format(e))
+        try:
+            if np_util.Check_API_Available():
+                np_util.Music_Login_Status()
+                persistent._NP_API_key_able = True
+                np_util.Get_OutIp()
+            else:
+                persistent._NP_API_key_able = False
+        except Exception as e:
+            persistent._NP_API_key_able = False
+            store.mas_submod_utils.submod_log.info("初始化连接时发生异常：{}".format(e))
 
 init -900 python:
     try:
         os.mkdir(renpy.config.basedir + "/game/Submods/NeteaseInMas/Catch")
+    except:
+        pass
+    try:
+        os.mkdir(renpy.config.basedir + "/game/Submods/NeteaseInMas/Cookies")
     except:
         pass
     

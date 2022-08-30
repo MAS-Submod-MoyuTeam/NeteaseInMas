@@ -58,6 +58,8 @@ init -5 python:
             renpy.show_screen("np_message", message = "登录失败! 请检查账号密码是否正确!")
         renpy.hide_screen("np_login")
 
+    def np_save_cookies():
+        np_util.Save_Cookies(np_globals.Cookies)
     
     def np_get_phonecaptcha():
         np_globals._LoginPhone = _np_LoginPhone
