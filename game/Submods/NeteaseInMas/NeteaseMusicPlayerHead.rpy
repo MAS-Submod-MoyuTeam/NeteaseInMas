@@ -60,7 +60,8 @@ init -5 python:
 
     def np_save_cookies():
         np_util.Save_Cookies(np_globals.Cookies)
-    
+    def np_refresh_cookies():
+        np_util.Music_Login_Refresh()
     def np_get_phonecaptcha():
         np_globals._LoginPhone = _np_LoginPhone
         np_util.Music_Get_Captcha(np_globals._LoginPhone)
@@ -91,7 +92,7 @@ init -5 python:
     np_buttontip_forcerefresh = "强制检测登录状态"
     np_buttontip_logout = "登出网易云音乐"
     np_buttontip_playermusiclist = "获取登录用户的'我喜欢'歌单"
-    np_buttontip_refreshcookie = "用于刷新Cookies的有效时间"
+    np_buttontip_refreshcookie = "用于刷新Cookies的有效时间(可能并不好用)"
 
 screen np_setting_pane():
     python:

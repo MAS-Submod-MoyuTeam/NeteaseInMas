@@ -158,8 +158,9 @@ init python in np_util:
             with open(np_globals.CookiesPath, 'r') as cookie:
                 cookiesDict = json.load(cookie)
             np_globals.Cookies = requtils.cookiejar_from_dict(cookiesDict)
-        except:
+        except Exception as e:
             np_globals.Cookies = None
+            submod_log.error("加载Cookies发生错误：{}".format(e))
     
     def Remove_Cookies():
         """
@@ -675,10 +676,9 @@ init python in np_screen_util:
 
 init 999 python:
     if persistent.np_Cookie is not None:
-        np_globals.Cookies = persistent.np_Cookie
         persistent.np_Cookie = None
     else:
-        np_globals.Cookies = np_utils.Load_Cookies()
+        np_util.Load_Cookies()
     try:
         if np_util.Check_API_Available():
             np_util.Music_Login_Status()
