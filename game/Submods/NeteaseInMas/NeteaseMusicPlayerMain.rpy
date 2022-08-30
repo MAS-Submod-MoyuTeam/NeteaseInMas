@@ -677,8 +677,7 @@ init python in np_screen_util:
 init 999 python:
     if persistent.np_Cookie is not None:
         persistent.np_Cookie = None
-    else:
-        np_util.Load_Cookies()
+    np_util.Load_Cookies()
     try:
         if np_util.Check_API_Available():
             np_util.Music_Login_Status()
