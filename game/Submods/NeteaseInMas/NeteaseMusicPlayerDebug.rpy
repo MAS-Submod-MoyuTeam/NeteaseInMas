@@ -2,7 +2,6 @@ init 999 python:
     if np_globals.debug:
         renpy.config.debug = True
         renpy.config.developer = True
-        np_globals.Mainurl = "http://neteaseapi.0721play.icu"
 init -4 python:
     _np_music_id = ""
     def np_debug_check():

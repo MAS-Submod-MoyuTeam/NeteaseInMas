@@ -389,7 +389,7 @@ init python in np_util:
         refresh = requests.get(url, cookies=np_globals.Cookies, verify = np_globals.VerifyPath, headers=np_globals.Header)
         new_cookies = refresh.cookies
         np_globals.Cookies.update(new_cookies)
-        Save_Cookies()
+        Save_Cookies(np_globals.Cookies)
         
     def Music_Get_Captcha(phone):
         """
