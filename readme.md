@@ -11,7 +11,6 @@
 > 因为使用的API出现了问题，现在调用手机登录接口会返回-460异常，但是搜索功能可以正常使用
 > 可以提前在客户端绑定163邮箱，用邮箱登录
 
-1
 1.确保使用的是最新汉化版本MAS.  
 2.从[Release](https://github.com/PencilMario/NeteaseInMas/releases)处下载最新的版本.  
 3.关闭游戏, 将zip中的文件合并到您的`DDLC`/`MAS_CN001***/Monika After Story`文件夹内, 或者是`DDLC.exe`/`MAS.exe`所在的位置  
