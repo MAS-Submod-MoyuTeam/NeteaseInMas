@@ -62,8 +62,7 @@ DDLC/
 * 本子模组无法播放版权音乐(需要黑胶VIP)和无版权音乐(网易云无版权), 会提示下载失败
 * 安装如果冲突, 替换与否都可、
 * 提示风控时，请参考`使用方法.docs`更新你的API（我会自行更新公开api）
-* ~~使用默认API，仅允许使用搜索播放功能，且播放模式限制为1（2需要登录），收藏歌单无法使用~~  
-> 现在能自由使用公共api登录
+
 
 ## 特别感谢
 [NeteaseCloudMusicApi](https://github.com/Binaryify/NeteaseCloudMusicApi) 本子模组使用的API, 没有这个就没有本子模组.  
