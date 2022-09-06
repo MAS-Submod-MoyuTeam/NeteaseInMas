@@ -529,7 +529,11 @@ init python in np_util:
         for file_name in dirs:
             if True:
                 file = np_globals.Catch + "/" + file_name
-                os.remove(file)
+                try:
+                    os.remove(file)
+                except Exception as e:
+                    submod_log.error(e)
+                    continue
     
     def Music_GetCatchSaveList():
         dirs = os.listdir(np_globals.Catch)

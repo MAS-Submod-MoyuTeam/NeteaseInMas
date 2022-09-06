@@ -160,11 +160,8 @@ screen np_setting_pane():
         textbutton "> 安全性问题说明":
             action Show("np_message", message = warn_message)
 
-        if not np_globals.Np_Playing:
-            textbutton "> 清理歌曲缓存 - [np_catchsize]MB":
-                action Function(np_del_catch)
-        else:
-            textbutton "> 清理歌曲缓存 - [np_catchsize]MB (请在开始使用前清理缓存)"
+        textbutton "> 清理歌曲缓存 - [np_catchsize]MB":
+            action Function(np_del_catch)
 
         if np_globals.debug:
             textbutton "> debug":
