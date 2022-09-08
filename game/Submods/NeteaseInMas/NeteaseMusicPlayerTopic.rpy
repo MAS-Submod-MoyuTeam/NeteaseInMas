@@ -281,6 +281,16 @@ label np_show_setting:
             "在播放歌曲时，转码后的最大尝试播放次数，默认为9"
             "每次重试的间隔为1.5s"
             $ persistent._np_max_retry = str(mas_input("输入非数字可能会导致异常, 当前为[persistent._np_max_retry]"))
+        "启动时播放缓存":
+            "这将导致启动后不会播放上次播放的歌曲，而是自动播放已经缓存过的所有歌曲"
+            "如果在播放缓存期间删除缓存，可能会导致异常"
+            menu:
+                "当前：[persistent.np_start_loopplay]"
+                "启用":
+                    $ persistent.np_start_loopplay = True
+                "禁用":
+                    $ persistent.np_start_loopplay = False
+                
         "算了":
             return
     

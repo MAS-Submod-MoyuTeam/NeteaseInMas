@@ -10,6 +10,7 @@
 init -100:
     default persistent._NP_API_key_able = False
     default persistent._NP_search_limit = "50"
+    default persistent.np_restart_song = None
 
 init -5 python in np_globals:
     import store
@@ -584,8 +585,9 @@ init python in np_util:
         np_globals.Music_Alia = ""
         np_globals.Music_Author = ""
         np_globals.Music_Id = ""
+        store.persistent.np_restart_song = None
 
-    def Music_Play(song, fadein=1.2, loop=True, set_per=False, fadeout=1.2, if_changed=False):
+    def Music_Play(song, fadein=1.2, loop=True, set_per=True, fadeout=1.2, if_changed=False):
         Music_Deleteflac()
         song = str(song)
         
@@ -608,7 +610,9 @@ init python in np_util:
         """
         if song is None:
             renpy.music.stop(channel="music", fadeout=fadeout)
+            store.persistent.current_track = None
         else:
+            store.persistent.np_restart_song = song
             if np_globals.Music_Type != "mp3":
                 mtype = ".wav"
             else:
@@ -627,7 +631,8 @@ init python in np_util:
             songs.selected_track = song
 
         if set_per:
-            store.persistent.current_track = song
+            store.persistent.current_track = None
+        store.persistent.np_restart_song_type = np_globals.Music_Type
         np_globals.Np_Playing = True
 
 init python in np_screen_util:
@@ -715,3 +720,17 @@ init -900 python:
 label np_emptylabel():
     pass
     return
+ 
+init 950 python:
+    def np_start_play():
+        if store.store.persistent.current_track is not None:
+            store.persistent.np_restart_song = None
+            store.persistent.np_restart_song_type = None
+        if store.persistent.np_start_loopplay:
+            store.np_util.Music_Play_List(song=store.np_util.Music_GetCatchSaveList(), fadein=1.2, loop=True, set_per=False, fadeout=1.2, if_changed=False)
+            return
+        if store.persistent.np_restart_song is not None and store.persistent.current_track is None:
+            np_globals.Music_Type = store.persistent.np_restart_song_type
+            np_util.Music_Play(store.persistent.np_restart_song)
+    # 在preloop注册来实现自启播放
+    store.mas_submod_utils.registerFunction('ch30_preloop', np_start_play)
