@@ -102,10 +102,22 @@ label np_play_musicid:
                     np_globals.Music_Type = "wav"
         if not catched:
             if persistent._np_playmode == NP_DOWNMODE2:
-                $ res = np_util.Music_Download(np_globals.Music_Id)
+                $ res = mas_threading.MASAsyncWrapper(np_util.Music_Download, [np_globals.Music_Id])
             else:
-                $ res = np_util.Music_Download_2(np_globals.Music_Id)
-            if res:
+                $ res = mas_threading.MASAsyncWrapper(np_util.Music_Download2, [np_globals.Music_Id])
+            $ res.start()
+            python:
+                stat = False
+                r = res.ready
+                if np_globals.debug:
+                    renpy.say(m, "[r]{nw}")
+                while not stat:
+                    renpy.say(m, "等我下好这首歌{fast}.{w=0.25}.{w=0.25}.{w=0.25}{nw}")
+                    _history_list.pop()
+                    stat = res.get()
+                    if stat == False:
+                        break
+            if stat == True:
                 m 1ksa "好了~{w=0.3}{nw}"
             else:
                 m 3rksdlb "这首歌我下不了, [player].{w=1.2}{nw}"
@@ -125,6 +137,7 @@ label np_play_musicid:
             while True:
                 if not renpy.loadable(npsong):
                     renpy.notify("转码时间比预计要长一些...\n最多重试[persistent._np_max_retry]次")
+                    _history_list.pop()
                     retry = retry + 1
                     time.sleep(1.5)
                     if retry > persistent._np_max_retry:
@@ -183,7 +196,15 @@ label np_show_userplaylist:
     if not len(np_globals.Play_List) > 0:
         m 1eka "呃...我还不知道你喜欢听什么呢.{w=2}{nw}"
         m 1dua "等我一下...{nw}"
-        $ np_util.Get_User_Playlist()
+        python:
+            a = mas_threading.MASAsyncWrapper(np_util.Get_User_Playlist)
+            a.start()
+            stat = False
+            while not stat:
+                 renpy.say(m, "等我一下{fast}.{w=0.15}.{w=0.15}.{w=0.15}{nw}")
+                 _history_list.pop()
+                 stat = a.done()
+
         m 1eub "我知道你喜欢什么了哦, [player].{w=2}{nw}"
     call display_np_music_menu
     if _return == None or _return == "":

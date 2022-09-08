@@ -98,7 +98,7 @@ screen np_setting_pane():
     python:
         np_screen_tt = store.renpy.get_screen("submods", "screens").scope["tooltip"]
         np_catchsize = np_util.Catch_size()/1024/1024
-    $ warn_message = "Netease Music不会将您的密码上传至任何第三者, 且密码上传时使用MD5加密.但请注意, 登录时关闭了证书验证(因为开启就验证失败), 所以仍然有一定的可能性导致被盗号.\n如果真的被盗号, 通常是因为你下了别人发的版本/你的PC上有病毒,MD5没那么好破\n如果想避免上述情况，建议不登录使用"
+    $ warn_message = "Netease Music不会将您的密码上传至任何第三者, 且密码上传时先在本地使用MD5加密.但请注意, 登录时关闭了证书验证(因为开启就验证失败), 所以仍然有一定的可能性导致被盗号.\n如果真的被盗号, 通常是因为你下了别人发的版本/你的PC上有病毒,MD5没那么好破\n如果想避免上述情况，建议不登录使用"
 #    """
 #    Submod菜单:
 #        计划格式:
@@ -129,33 +129,30 @@ screen np_setting_pane():
                 style "main_menu_version"
         #> !已登录 ? 登陆账号 : 注销账号
 
-        if np_globals.Mainurl == DEFAULT_NP_API:
-            textbutton "> 默认API不允许登录, 请创建API以使用完整功能"
+        if not np_globals.Np_Status:
+            textbutton "> 登录账号":
+                action Show("np_login")
+                hovered SetField(np_screen_tt, "value", np_buttontip_login)
+                unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
+            textbutton "> 强制刷新登录":
+                action Function(np_force_refresh)
+                hovered SetField(np_screen_tt, "value", np_buttontip_forcerefresh)
+                unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
         else:
-            if not np_globals.Np_Status:
-                textbutton "> 登录账号":
-                    action Show("np_login")
-                    hovered SetField(np_screen_tt, "value", np_buttontip_login)
-                    unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
-                textbutton "> 强制刷新登录":
-                    action Function(np_force_refresh)
-                    hovered SetField(np_screen_tt, "value", np_buttontip_forcerefresh)
-                    unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
-            else:
-                textbutton "> 注销账号":
-                    action Show("np_logout")
-                    hovered SetField(np_screen_tt, "value", np_buttontip_logout)
-                    unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
-                textbutton "> 获取'我喜欢的音乐'":
-                    hovered SetField(np_screen_tt, "value", np_buttontip_playermusiclist)
-                    unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
-                    action Function(np_get_ml)
-                textbutton "> 手动保存Cookies":
-                    action Function(np_save_cookies)
-                textbutton "> 手动刷新Cookies":
-                    hovered SetField(np_screen_tt, "value", np_buttontip_refreshcookie)
-                    unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
-                    action Function(np_refresh_cookies)
+            textbutton "> 注销账号":
+                action Show("np_logout")
+                hovered SetField(np_screen_tt, "value", np_buttontip_logout)
+                unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
+            textbutton "> 获取'我喜欢的音乐'":
+                hovered SetField(np_screen_tt, "value", np_buttontip_playermusiclist)
+                unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
+                action Function(np_get_ml)
+            textbutton "> 手动保存Cookies":
+                action Function(np_save_cookies)
+            textbutton "> 手动刷新Cookies":
+                hovered SetField(np_screen_tt, "value", np_buttontip_refreshcookie)
+                unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
+                action Function(np_refresh_cookies)
         
         textbutton "> 安全性问题说明":
             action Show("np_message", message = warn_message)

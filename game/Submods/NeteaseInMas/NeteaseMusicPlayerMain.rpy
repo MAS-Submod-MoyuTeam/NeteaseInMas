@@ -24,7 +24,7 @@ init -5 python in np_globals:
     Catch = Basedir + "/game/Submods/NeteaseInMas/Catch"
     FFmpegDir =  Basedir + "/game/Submods/NeteaseInMas/ffmpeg/win32/usr/bin"
     FFmpegexe = FFmpegDir + "/ffmpeg"
-    VerifyPath = False # Basedir + "/game/python-packages/certifi/cacert.pem"
+    VerifyPath = True
     CookiesPath = Basedir + "/game/Submods/NeteaseInMas/Cookies/cookies.json"
 
     ######################## API
@@ -93,6 +93,7 @@ init -5 python in np_globals:
     _LoginPhone = None
     _LoginPw = None
     _LoginCaptcha = None
+    # 下载缓存区大小
     CatchSize = 12000
     Cookies = None
     Header={'Connection':'close'}
@@ -461,8 +462,6 @@ init python in np_util:
         for chunk in _music_download.iter_content(chunk_size = np_globals.CatchSize):
             if chunk:
                 _flac.write(chunk)
-
-        # 验证文件是否存在
         return True
 
     def Music_Download_2(id):
@@ -680,6 +679,10 @@ init -900 python:
         os.mkdir(renpy.config.basedir + "/game/Submods/NeteaseInMas/Cookies")
     except:
         pass
+    
+    # 签名fix
+    import os
+    os.environ['REQUESTS_CA_BUNDLE'] = renpy.config.basedir + "/game/python-packages/certifi/cacert.pem"
     
 
 label np_emptylabel():
