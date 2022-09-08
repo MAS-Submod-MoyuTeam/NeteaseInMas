@@ -24,11 +24,12 @@
 DDLC/
     game/
         python-packages/
-            requests/
-                **requests库文件**
+            **第三方python包**
         Submods/NeteaseInMas/
             Catch/
                 **缓存文件夹**
+            Cookies/
+                **账号信息Cookies文件夹**
             ffmpeg/
                 **ffmpeg程序, 转码需要用到**
             NeteaseMusicPlayerDebug.rpy 
@@ -41,12 +42,10 @@ DDLC/
                 **子模组定义方法, 全局变量等的脚本文件**
             NeteaseMusicPlayerOverwrite.rpy
                 **子模组重写原MAS脚本内容，用于额外功能按钮**
-            NeteaseMusicPlayerThreading.rpy
-                **子模组Threading文件, 似乎也可以删**
             NeteaseMusicPlayerTopic.rpy
                 **子模组定义整个操作流程的文件**
     lib/windows-i686/Lib/
-        **requests需要的其它库文件**
+        **一些本应该有的文件**
 ```
 
 ## 使用方法  

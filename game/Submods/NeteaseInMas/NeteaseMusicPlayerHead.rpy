@@ -339,6 +339,7 @@ screen np_input_screen(prompt):
                 selected False
                 action Return("User_Canceled")
 
+#            有一点点想实现搜索历史的想法，不过摸了
 #            if has_history:
 #                if renpy.get_screen("ytm_history_submenu") is None:
 #                    textbutton _("Show previous tracks"):
@@ -484,8 +485,6 @@ label display_np_music_menu:
             else:
                 song_selected = True
                 
-
-         
     $ np_globals.menu_open = False
     return _return
 

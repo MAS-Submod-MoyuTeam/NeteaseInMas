@@ -58,7 +58,6 @@ label np_search:
         call np_search
     else:
         m 2duc "等我去搜一下...{nw}"
-        #$ store.np_threading.Music_Search
         $ store.np_util.Music_Search(np_globals.Search_Word)
         call np_menu_display
     return
@@ -88,23 +87,18 @@ label np_menu_display:
 label np_play_musicid:
     python:
         catched = False
-        ctype=""
-    #if not np_util.Music_Check():
-    #    m "这首歌...网易云没版权了..."
-    #    m "换一首吧~"
-    #    return
     if np_globals.Np_Status or persistent._np_playmode == NP_DOWNMODE1: 
         call np_timed_text_events_prep
         m 1dsc "等我下好这首歌...{nw}"
         python:
             import os
             if os.path.exists(np_globals.Catch + "/" + np_globals.Music_Id + ".mp3") or os.path.exists(np_globals.Catch + "/" + np_globals.Music_Id + ".wav"):
+                # 本地存在缓存
                 catched = True
+                # 根据缓存类型判断播放的格式
                 if os.path.exists(np_globals.Catch + "/" + np_globals.Music_Id + ".mp3"):
-                    ctype=".mp3"
                     np_globals.Music_Type = "mp3"
                 else:
-                    ctype=".wav"
                     np_globals.Music_Type = "wav"
         if not catched:
             if persistent._np_playmode == NP_DOWNMODE2:
@@ -121,8 +115,10 @@ label np_play_musicid:
             python:
                 if np_globals.Music_Type == "mp3":
                     speed = 4500.0
-                else:
+                elif np_globals.Music_Type == 'wav':
                     speed = 30000
+                else:
+                    speed = 4500
                 wtime = np_globals.Music_Size / 1024 / speed
                 if wtime > 20:
                     wtime = 20
@@ -132,9 +128,6 @@ label np_play_musicid:
             if np_globals.debug:
                 m 1esa "预计时间:[wtime]{nw}"
             if np_globals.Music_Type != "mp3":
-                #if persistent._np_playmode == 1 and persistent._np_playmode == 1:
-                #    $ np_util.Music_ToMp3()
-                #else:
                 $ np_util.Music_ToWav()
                 m 1eua "接下来...等音乐转码完就好了...{w=[wtime]}{nw}"
             
@@ -204,9 +197,7 @@ label np_show_userplaylist:
         m 1dua "等我一下...{nw}"
         $ np_util.Get_User_Playlist()
         m 1eub "我知道你喜欢什么了哦, [player].{w=2}{nw}"
-    #m "call display_np_music_menu{nw}"
     call display_np_music_menu
-    #m "设置Music_Id{nw}"
     if _return == None or _return == "":
         m 3rka "None"
         return
@@ -220,7 +211,6 @@ label np_show_userplaylist:
         $ np_globals.menu_open = False
         return
     $ np_globals.Music_Id = _return
-    #m "call np_play_musicid{nw}"
     call np_play_musicid
     return
 
@@ -320,5 +310,7 @@ label np_timed_text_events_wrapup:
         # restor auto-forward pref
         renpy.game.preferences.afm_enable = afm_pref
 
+    # 展示莫妮卡为闲置状态以防万一
+    show monika idle
     return
 

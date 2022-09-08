@@ -112,21 +112,6 @@ init 100:
             renpy.music.set_pause(False)
             np_paused=False
 
-
-
-label mas_extra_menu_close_p1:
-    $ store.mas_extramenu.menu_visible = False
-    hide screen mas_extramenu_area
-    if store.mas_sprites.zoom_level != prev_zoom:
-        call mas_extra_menu_zoom_callback
-
-    # re-enable overlays
-    if store.mas_globals.in_idle_mode:
-        $ mas_coreToIdleShield()
-    else:
-        $ mas_DropShield_core()
-    return
-
 label mas_extra_menu_close_p2:
     show monika idle
     jump ch30_loop

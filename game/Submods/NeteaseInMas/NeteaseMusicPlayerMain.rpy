@@ -101,9 +101,7 @@ init -5 python in np_globals:
 
     # ip
     Outip=""
-
-    GlobalSubP = None
-
+    # 返回结果
     ReqCode = 0
     # Music menu菜单
     menu_open = False
@@ -296,15 +294,6 @@ init python in np_util:
         except:
             np_globals.Music_Alia = ""
     
-    def Music_EncodeMp3():
-        """
-        创建新线程转换MP3 X
-        转换Music_Id
-        """
-        #npthread = NpThread(1000, "NpToMp3", 1)
-        #npthread.start()
-        Music_ToMp3()
-
     def Init_FFmpeg():
         """
         初始化FFmpeg, 添加至环境变量
@@ -313,25 +302,16 @@ init python in np_util:
         subprocess.Popen(addpathcmd)
         store.persistent.Np_InitedFFmpeg == True
 
-    def Music_ToMp3():
-        """
-        将音频文件转码为MP3
-        id 歌曲id
-        """
-        id = np_globals.Music_Id
-        outdir = np_globals.Catch
-        cmd = "\"{}\" -i \"{}/{}.flac\" -ab 320k \"{}/{}.mp3\" -y".format(np_globals.FFmpegexe, outdir, id, outdir, id)
-        a = subprocess.Popen(cmd)
-
     def Music_ToWav():
         """
         将音频文件转码为WAV
         id 歌曲id
         """
+        from win32process import CREATE_NO_WINDOW
         id = np_globals.Music_Id
         outdir = np_globals.Catch
         cmd = "\"{}\" -i \"{}/{}.flac\" -ab 990k \"{}/{}.wav\" -y".format(np_globals.FFmpegexe, outdir, id, outdir, id)
-        a = subprocess.Popen(cmd)
+        a = subprocess.Popen(cmd, creationflags=CREATE_NO_WINDOW)
 
     def Get_OutIp():
         np_globals.Outip=requests.get('http://ifconfig.me/ip', headers=np_globals.Header).text.strip()
@@ -395,7 +375,6 @@ init python in np_util:
     def Music_Get_Captcha(phone):
         """
         获取验证码
-        因为API会缓存访问结果，所以大概不需要做快速发送验证
 
         return:
             是否成功
@@ -417,8 +396,6 @@ init python in np_util:
             except:
                 renpy.notify("发送失败：{}".format(sendjson['code']))
             return False
-
-
 
     def Music_Login_Status():
         """
@@ -487,7 +464,7 @@ init python in np_util:
         return True
 
     def Music_Download_2(id):
-        #根据ID下载flac - 低音质
+        #根据ID下载flac - song/id
         id = str(id)
         cookie = np_globals.Cookies
         url = np_globals.Mainurl + np_globals.MusicDownloadurl2 + id
@@ -507,18 +484,11 @@ init python in np_util:
             if chunk:
                 _flac.write(chunk)
         return True
-    
-    def Music_Check():
-        """
-        检测歌曲是否可用
-        返回bool
-        """
-        url = np_globals.Mainurl + np_globals.MusicCheck + np_globals.Music_Id
-        res = requests.get(url, verify = np_globals.VerifyPath, headers=np_globals.Header)
-        r = res.json()
-        return r['success']
 
     def Music_Deleteflac():
+        """
+        删除无法播放的flac文件
+        """ 
         dirs = os.listdir(np_globals.Catch)
         for file_name in dirs:
             if file_name.find('flac') != -1:
@@ -526,6 +496,9 @@ init python in np_util:
                 os.remove(file)
 
     def Music_DeleteCatch():
+        """
+        清理缓存文件夹，如果失败就跳过
+        """
         dirs = os.listdir(np_globals.Catch)
         for file_name in dirs:
             if True:
@@ -537,6 +510,9 @@ init python in np_util:
                     continue
     
     def Music_GetCatchSaveList():
+        """
+        列出缓存文件列表
+        """
         dirs = os.listdir(np_globals.Catch)
         catched = []
         for file_name in dirs:
@@ -550,14 +526,14 @@ init python in np_util:
         """
         播放已缓存列表
         IN:
-            song - Song to play. If None, the channel is stopped
-            fadein - Number of seconds to fade the song in
+            song - Music_GetCatchSaveList() 获取缓存列表
+            fadein - 过度渐入时间
                 (Default: 0.0)
-            loop - True if we should loop the song if possible, False to not loop.
+            loop - 是否循环播放
                 (Default: True)
-            set_per - True if we should set persistent track, False if not
+            set_per - 是否保存至persistent 无实际意义
                 (Default: False)
-            fadeout - Number of seconds to fade the song out
+            fadeout - 过度渐出时间
                 (Default: 0.0)
             if_changed - Whether or not to only set the song if it's changing
                 (Use to play the same song again without it being restarted)
@@ -566,11 +542,6 @@ init python in np_util:
         if song is None or song == []:
             renpy.music.stop(channel="music", fadeout=fadeout)
         else:
-            #if np_globals.Music_Type != "mp3":
-            #    mtype = ".wav"
-            #else:
-            #    mtype = ".mp3"
-            #song = (np_globals.Catch + "/" + song + mtype).replace("\\","/")
             renpy.music.play(
                 song,
                 channel="music",
@@ -592,27 +563,28 @@ init python in np_util:
         song = str(song)
         
         """
-        literally just plays a song onto the music channel
-        Also sets the currentt track
+        播放某一首歌 同时设置为启动音乐
         IN:
-            song - Song to play. If None, the channel is stopped
-            fadein - Number of seconds to fade the song in
-                (Default: 0.0)
-            loop - True if we should loop the song if possible, False to not loop.
+            song - 要播放的id. 如为None则停止
+            fadein - 过度渐入时间
+                (Default: 1.2)
+            loop - 是否循环播放
                 (Default: True)
-            set_per - True if we should set persistent track, False if not
-                (Default: False)
-            fadeout - Number of seconds to fade the song out
-                (Default: 0.0)
+            set_per - 是否保存至persistent 决定是否启动播放
+                (Default: True)
+            fadeout - 过度渐出时间
+                (Default: 1.2)
             if_changed - Whether or not to only set the song if it's changing
                 (Use to play the same song again without it being restarted)
                 (Default: False)
         """
         if song is None:
             renpy.music.stop(channel="music", fadeout=fadeout)
-            store.persistent.current_track = None
+            if set_per:
+                store.persistent.current_track = None
         else:
-            store.persistent.np_restart_song = song
+            if set_per:
+                store.persistent.np_restart_song = song
             if np_globals.Music_Type != "mp3":
                 mtype = ".wav"
             else:
@@ -632,7 +604,7 @@ init python in np_util:
 
         if set_per:
             store.persistent.current_track = None
-        store.persistent.np_restart_song_type = np_globals.Music_Type
+            store.persistent.np_restart_song_type = np_globals.Music_Type
         np_globals.Np_Playing = True
 
 init python in np_screen_util:
@@ -658,19 +630,6 @@ init python in np_screen_util:
                 s = unicode(s)
             self.input_value = s
 
-    #def toggleChildScreenAnimation(new_value):
-    #"""
-    #This allows us to hide the sub-menu w/o animation
-    #when we need it to just disappear immediately
-    #IN:
-    #    new_value - a bool to switch the setting
-    #"""
-    #_screen = renpy.get_screen("ytm_history_submenu")
-    #if _screen:
-    #    _settings = _screen.scope.get("settings", None)
-    #    if _settings:
-    #        _settings["animate"] = new_value
-
     def setParentInputValue(new_input):
         """
         A wrapper which allows us to do the magic in local env
@@ -684,9 +643,12 @@ init python in np_screen_util:
                 np.set_text(new_input)
 
 init 999 python:
+    # 初始化cookies
     if persistent.np_Cookie is not None:
         persistent.np_Cookie = None
     np_util.Load_Cookies()
+
+    # 检查API连通性
     try:
         if np_util.Check_API_Available():
             np_util.Music_Login_Status()
@@ -695,6 +657,7 @@ init 999 python:
         else:
             persistent._NP_API_key_able = False
     except Exception as e:
+        # 尝试两次
         try:
             if np_util.Check_API_Available():
                 np_util.Music_Login_Status()
@@ -707,6 +670,7 @@ init 999 python:
             store.mas_submod_utils.submod_log.info("初始化连接时发生异常：{}".format(e))
 
 init -900 python:
+    # 创建缓存和cookies文件夹
     try:
         os.mkdir(renpy.config.basedir + "/game/Submods/NeteaseInMas/Catch")
     except:
@@ -722,15 +686,22 @@ label np_emptylabel():
     return
  
 init 950 python:
+    # 自启动播放判断
     def np_start_play():
-        if store.store.persistent.current_track is not None:
+        # 使用了MAS默认菜单播放音乐，清除np保存的歌曲以防止错误
+        if store.persistent.current_track is not None:
             store.persistent.np_restart_song = None
             store.persistent.np_restart_song_type = None
+        
+        # 如果设置了播放缓存
         if store.persistent.np_start_loopplay:
             store.np_util.Music_Play_List(song=store.np_util.Music_GetCatchSaveList(), fadein=1.2, loop=True, set_per=False, fadeout=1.2, if_changed=False)
             return
+        
+        # 只当np_restart_song不为空且current_track为空时启动播放
         if store.persistent.np_restart_song is not None and store.persistent.current_track is None:
             np_globals.Music_Type = store.persistent.np_restart_song_type
             np_util.Music_Play(store.persistent.np_restart_song)
-    # 在preloop注册来实现自启播放
+
+    # 在preloop label注册来实现自启播放
     store.mas_submod_utils.registerFunction('ch30_preloop', np_start_play)
