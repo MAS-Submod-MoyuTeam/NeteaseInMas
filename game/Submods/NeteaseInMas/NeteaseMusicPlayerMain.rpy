@@ -307,11 +307,13 @@ init python in np_util:
         将音频文件转码为WAV
         id 歌曲id
         """
-        from win32process import CREATE_NO_WINDOW
         id = np_globals.Music_Id
         outdir = np_globals.Catch
         cmd = "\"{}\" -i \"{}/{}.flac\" -ab 990k \"{}/{}.wav\" -y".format(np_globals.FFmpegexe, outdir, id, outdir, id)
-        a = subprocess.Popen(cmd, creationflags=CREATE_NO_WINDOW)
+        st=subprocess.STARTUPINFO
+        st.dwFlags=subprocess.STARTF_USESHOWWINDOW
+        st.wShowWindow=subprocess.SW_HIDE
+        a = subprocess.Popen(cmd, startupinfo=st)
 
     def Get_OutIp():
         np_globals.Outip=requests.get('http://ifconfig.me/ip', headers=np_globals.Header).text.strip()
@@ -559,7 +561,6 @@ init python in np_util:
         store.persistent.np_restart_song = None
 
     def Music_Play(song, fadein=1.2, loop=True, set_per=True, fadeout=1.2, if_changed=False):
-        Music_Deleteflac()
         song = str(song)
         
         """
@@ -695,13 +696,19 @@ init 950 python:
         
         # 如果设置了播放缓存
         if store.persistent.np_start_loopplay:
-            store.np_util.Music_Play_List(song=store.np_util.Music_GetCatchSaveList(), fadein=1.2, loop=True, set_per=False, fadeout=1.2, if_changed=False)
+            try:
+                store.np_util.Music_Play_List(song=store.np_util.Music_GetCatchSaveList(), fadein=1.2, loop=True, set_per=False, fadeout=1.2, if_changed=False)
+            except Exception as e:
+                store.mas_submod_utils.submod_log.error("播放缓存失败：{}".format(e))
             return
         
         # 只当np_restart_song不为空且current_track为空时启动播放
         if store.persistent.np_restart_song is not None and store.persistent.current_track is None:
             np_globals.Music_Type = store.persistent.np_restart_song_type
-            np_util.Music_Play(store.persistent.np_restart_song)
+            try:
+                np_util.Music_Play(store.persistent.np_restart_song)
+            except Exception as e:
+                store.mas_submod_utils.submod_log.error("播放文件失败：{}".format(e))
 
     # 在preloop label注册来实现自启播放
     store.mas_submod_utils.registerFunction('ch30_preloop', np_start_play)

@@ -4,7 +4,7 @@ default persistent._np_playmode = NP_DOWNMODE1
 default persistent._np_max_retry = 9
 define NP_CONMODE_MP3 = 1
 define NP_CONMODE_WAV = 2
-define persistent._np_conmode = NP_CONMODE_WAV
+default persistent.np_start_loopplay = False
 init 5 python:
     addEvent(
             Event(
@@ -112,35 +112,18 @@ label np_play_musicid:
                 m "多半是因为网易云没有版权, 换一首吧.{w=1.2}{nw}"
                 call np_timed_text_events_wrapup
                 return
-            python:
-                if np_globals.Music_Type == "mp3":
-                    speed = 4500.0
-                elif np_globals.Music_Type == 'wav':
-                    speed = 30000
-                else:
-                    speed = 4500
-                wtime = np_globals.Music_Size / 1024 / speed
-                if wtime > 20:
-                    wtime = 20
-                elif wtime < 4:
-                    wtime = 4
-            
-            if np_globals.debug:
-                m 1esa "预计时间:[wtime]{nw}"
+
             if np_globals.Music_Type != "mp3":
                 $ np_util.Music_ToWav()
-                m 1eua "接下来...等音乐转码完就好了...{w=[wtime]}{nw}"
+                m 1eua "等我把这首歌转码好.{w=1.5}.{w=1.5}.{w=1.5}{nw}"
             
         python:
-            import time
-            playable = False
+            import time, os
             retry = 0
             FAILED = False
-            while not playable:
-                try:
-                    np_util.Music_Play(np_globals.Music_Id)
-                    playable = True
-                except:
+            npsong = (np_globals.Catch + "/" + np_globals.Music_Id + '.' +  np_globals.Music_Type).replace("\\","/")
+            while True:
+                if not renpy.loadable(npsong):
                     renpy.notify("转码时间比预计要长一些...\n最多重试[persistent._np_max_retry]次")
                     retry = retry + 1
                     time.sleep(1.5)
@@ -148,12 +131,17 @@ label np_play_musicid:
                         FAILED = True
                         break
                     renpy.say(m, "第[retry]次重试...{nw}")
+                else:
+                    np_util.Music_Play(np_globals.Music_Id)
+                    break
         if FAILED:
             call np_timed_text_events_wrapup
             m 3rksdlb "出了点问题...我没法播放这首歌..."
             m "再试一遍如何, [player]?"
+            show monika idle
             return
         $ np_util.Music_GetDetail()
+        $ np_util.Music_Deleteflac()
         m 3hub "搞定~{w=3}{nw}"
         call np_timed_text_events_wrapup
         python:
@@ -252,17 +240,6 @@ label np_show_setting:
                     $ persistent._np_playmode = NP_DOWNMODE1
                 "song/download/id":
                     $ persistent._np_playmode = NP_DOWNMODE2
-        #"转码格式": - 导致了太多bug，强制为.wav
-        #    "当下载的音乐格式不支持(flac)时, 会调用ffmpeg进行转码, 通常出现于song/download/id"
-        #    "转码为MP3存储占用较低, 通常来说flac转为mp3会导致音质损失，而且速度相比于WAV极慢"
-        #    "转码为WAV不会有音质损失, 存储占用较高，但是几乎瞬间转码完成"
-        #    "如果下载原格式为MP3, 则不会进行转码"
-        #    menu:
-        #        "请选择转码模式, 当前为[persistent._np_conmode]"
-        #        "mp3":
-        #            $ persistent._np_conmode = NP_CONMODE_MP3
-        #        "wav":
-        #            $ persistent._np_conmode = NP_CONMODE_WAV
         "搜索结果数":
             "决定了搜索歌曲返回的结果数量"
             $ persistent._NP_search_limit = str(mas_input("输入非数字可能会导致异常, 当前为[persistent._NP_search_limit]"))
