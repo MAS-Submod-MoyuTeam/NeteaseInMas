@@ -1,11 +1,3 @@
-#    todo:
-#        界面:
-#            - 登录
-#            - 刷新登录缓存 X - 无法实现
-#            - 正在播放
-#            - 清除下载歌曲
-define DEFAULT_NP_API = ""#"https://netease-cloud-music-api-murex-gamma.vercel.app"
-
 init -990 python:
     store.mas_submod_utils.Submod(
         author="P",
@@ -98,7 +90,7 @@ screen np_setting_pane():
     python:
         np_screen_tt = store.renpy.get_screen("submods", "screens").scope["tooltip"]
         np_catchsize = np_util.Catch_size()/1024/1024
-    $ warn_message = "Netease Music不会将您的密码上传至任何第三者, 且密码上传时先在本地使用MD5加密.但请注意, 登录时关闭了证书验证(因为开启就验证失败), 所以仍然有一定的可能性导致被盗号.\n如果真的被盗号, 通常是因为你下了别人发的版本/你的PC上有病毒,MD5没那么好破\n如果想避免上述情况，建议不登录使用"
+    $ warn_message = "Netease Music不会将您的密码上传至任何第三者, 且密码上传时先在本地使用MD5加密. 下载时要确保从正确的渠道下载，因为别人发的版本可能存在后门:)\n官方Github存储库：{a=https://github.com/MAS-Submod-MoyuTeam/NeteaseInMas}点我{/a}"
 #    """
 #    Submod菜单:
 #        计划格式:
