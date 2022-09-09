@@ -104,7 +104,7 @@ label np_play_musicid:
             if persistent._np_playmode == NP_DOWNMODE2:
                 $ res = mas_threading.MASAsyncWrapper(np_util.Music_Download, [np_globals.Music_Id])
             else:
-                $ res = mas_threading.MASAsyncWrapper(np_util.Music_Download2, [np_globals.Music_Id])
+                $ res = mas_threading.MASAsyncWrapper(np_util.Music_Download_2, [np_globals.Music_Id])
             $ res.start()
             python:
                 stat = False
