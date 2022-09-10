@@ -117,7 +117,10 @@ label np_play_musicid:
                     if t > 100:
                         stat=None
                         break
-                    renpy.say(m, "([t]/100)等我下好这首歌{fast}.{w=0.25}.{w=0.25}.{w=0.25}{nw}")
+                    if t > 20:
+                        renpy.say(m, "([t]/100)等我下好这首歌{fast}.{w=0.25}.{w=0.25}.{w=0.25}{nw}")
+                    else:
+                        renpy.say(m, "等我下好这首歌{fast}.{w=0.25}.{w=0.25}.{w=0.25}{nw}")
                     _history_list.pop()
                     stat = res.get()
                     if stat == False:
