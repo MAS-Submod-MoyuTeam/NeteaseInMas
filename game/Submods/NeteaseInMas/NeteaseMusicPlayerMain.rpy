@@ -302,7 +302,7 @@ init python in np_util:
         subprocess.Popen(addpathcmd)
         store.persistent.Np_InitedFFmpeg == True
 
-    def Music_ToWav():
+    def Music_ToWav(self):
         """
         将音频文件转码为WAV
         id 歌曲id

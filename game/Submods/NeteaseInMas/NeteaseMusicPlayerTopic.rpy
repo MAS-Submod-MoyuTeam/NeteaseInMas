@@ -109,19 +109,29 @@ label np_play_musicid:
             python:
                 stat = False
                 r = res.ready
+                t=0
                 if np_globals.debug:
                     renpy.say(m, "[r]{nw}")
                 while not stat:
-                    renpy.say(m, "等我下好这首歌{fast}.{w=0.25}.{w=0.25}.{w=0.25}{nw}")
+                    t=t+1
+                    if t > 100:
+                        stat=None
+                        break
+                    renpy.say(m, "([t]/100)等我下好这首歌{fast}.{w=0.25}.{w=0.25}.{w=0.25}{nw}")
                     _history_list.pop()
                     stat = res.get()
                     if stat == False:
                         break
             if stat == True:
                 m 1ksa "好了~{w=0.3}{nw}"
-            else:
+            elif stat == False:
                 m 3rksdlb "这首歌我下不了, [player].{w=1.2}{nw}"
-                m "多半是因为网易云没有版权, 换一首吧.{w=1.2}{nw}"
+                m "多半是因为网易云没有版权, 换一首或重试一下吧.{w=1.2}{nw}"
+                call np_timed_text_events_wrapup
+                return
+            else:
+                m "下载的时间有点久...{w=1.2}{nw}"
+                m "重试一下吧~{w=1.2}{nw}"
                 call np_timed_text_events_wrapup
                 return
 
