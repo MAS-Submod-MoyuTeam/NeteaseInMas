@@ -251,12 +251,10 @@ label np_show_setting:
             "接口song/id和song/download/id"
             "song/id可以在非登录状态使用，而song/download/id必须登录使用"
             "song/id对于部分歌曲(需要VIP)可能只能播放试听片段"
-            "song/id的加载速度更快"
-            "song/download/id的音质比song/id更好"
-            "如果你能登录，请优先使用song/download/id, song/id在登录/非登录状态可能有两种类型，可能更容易出bug"
+            "登陆后，这两个接口下载的歌曲品质一般相同"
             "两者都无法播放无版权音乐和需要黑胶VIP的音乐"
             menu:
-                "请选择播放模式, 当前为[mode]"
+                "请选择下载模式, 当前为[mode]"
                 "song/id":
                     $ persistent._np_playmode = NP_DOWNMODE1
                 "song/download/id":

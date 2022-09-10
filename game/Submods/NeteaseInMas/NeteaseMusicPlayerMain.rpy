@@ -126,7 +126,7 @@ init python in np_util:
     import threading
     import os, sys
     import store.songs as songs
-    import urllib2
+    import urllib3
     import time
     from store.mas_submod_utils import submod_log
 
@@ -254,7 +254,7 @@ init python in np_util:
         返回 结果list
         """
         res = list()
-        keyword = urllib2.quote(keyword.encode('utf-8'))
+        keyword = urllib3.quote(keyword.encode('utf-8'))
         url = np_globals.Mainurl + np_globals.Search + keyword + np_globals.SearchToLimit
         search = requests.get(url, verify = np_globals.VerifyPath, headers=np_globals.Header)
         result = search.json()
