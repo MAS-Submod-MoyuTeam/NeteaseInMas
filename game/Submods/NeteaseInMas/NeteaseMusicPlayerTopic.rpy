@@ -127,11 +127,13 @@ label np_play_musicid:
             elif stat == False:
                 m 3rksdlb "这首歌我下不了, [player].{w=1.2}{nw}"
                 m "多半是因为网易云没有版权, 换一首或重试一下吧.{w=1.2}{nw}"
+                $ res.end()
                 call np_timed_text_events_wrapup
                 return
             else:
-                m "下载的时间有点久...{w=1.2}{nw}"
+                m 3rksdlb "下载的时间有点久...{w=1.2}{nw}"
                 m "重试一下吧~{w=1.2}{nw}"
+                $ res.end()
                 call np_timed_text_events_wrapup
                 return
 
@@ -262,7 +264,7 @@ label np_show_setting:
             "song/id可以在非登录状态使用，而song/download/id必须登录使用"
             "song/id对于部分歌曲(需要VIP)可能只能播放试听片段"
             "登陆后，这两个接口下载的歌曲品质一般相同"
-            "对于flac格式，song/id的速度可能慢于song/download/id，可能会导致超时"
+            #"对于flac格式，song/id的速度可能慢于song/download/id，可能会导致超时"
             "两者都无法播放无版权音乐和需要黑胶VIP的音乐"
             menu:
                 "请选择下载模式, 当前为[mode]"

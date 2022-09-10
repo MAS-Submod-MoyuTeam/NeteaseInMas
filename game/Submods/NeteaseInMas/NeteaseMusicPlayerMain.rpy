@@ -94,7 +94,7 @@ init -5 python in np_globals:
     _LoginPw = None
     _LoginCaptcha = None
     # 下载缓存区大小
-    CatchSize = 12000
+    CatchSize = 120000
     Cookies = None
     Header={'Connection':'close'}
     # 上次获取验证码时间
@@ -303,10 +303,10 @@ init python in np_util:
         id = np_globals.Music_Id
         outdir = np_globals.Catch
         cmd = "\"{}\" -i \"{}/{}.flac\" -ab 990k \"{}/{}.wav\" -y".format(np_globals.FFmpegexe, outdir, id, outdir, id)
-        st=subprocess.STARTUPINFO
+        st=subprocess.STARTUPINFO()
         st.dwFlags=subprocess.STARTF_USESHOWWINDOW
         st.wShowWindow=subprocess.SW_HIDE
-        a = subprocess.Popen(cmd)#, startupinfo=st)
+        a = subprocess.Popen(cmd, startupinfo=st)
 
     def Get_OutIp():
         np_globals.Outip=requests.get('http://ifconfig.me/ip', headers=np_globals.Header).text.strip()
@@ -488,8 +488,11 @@ init python in np_util:
         for file_name in dirs:
             if file_name.find('flac') != -1:
                 file = np_globals.Catch + "/" + file_name
-                os.remove(file)
-
+                try:
+                    os.remove(file)
+                except Exception as e:
+                    submod_log.error("清除flac: {}".format(e))
+                    continue
     def Music_DeleteCatch():
         """
         清理缓存文件夹，如果失败就跳过
