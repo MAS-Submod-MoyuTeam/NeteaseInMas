@@ -262,6 +262,7 @@ label np_show_setting:
             "song/id可以在非登录状态使用，而song/download/id必须登录使用"
             "song/id对于部分歌曲(需要VIP)可能只能播放试听片段"
             "登陆后，这两个接口下载的歌曲品质一般相同"
+            "对于flac格式，song/id的速度可能慢于song/download/id，可能会导致超时"
             "两者都无法播放无版权音乐和需要黑胶VIP的音乐"
             menu:
                 "请选择下载模式, 当前为[mode]"

@@ -294,15 +294,8 @@ init python in np_util:
         except:
             np_globals.Music_Alia = ""
     
-    def Init_FFmpeg():
-        """
-        初始化FFmpeg, 添加至环境变量
-        """
-        addpathcmd = "setx \"Path\" \"%Path%;{}\"".format(np_globals.FFmpegDir)
-        subprocess.Popen(addpathcmd)
-        store.persistent.Np_InitedFFmpeg == True
 
-    def Music_ToWav(self):
+    def Music_ToWav():
         """
         将音频文件转码为WAV
         id 歌曲id
@@ -313,7 +306,7 @@ init python in np_util:
         st=subprocess.STARTUPINFO
         st.dwFlags=subprocess.STARTF_USESHOWWINDOW
         st.wShowWindow=subprocess.SW_HIDE
-        a = subprocess.Popen(cmd, startupinfo=st)
+        a = subprocess.Popen(cmd)#, startupinfo=st)
 
     def Get_OutIp():
         np_globals.Outip=requests.get('http://ifconfig.me/ip', headers=np_globals.Header).text.strip()
@@ -461,6 +454,7 @@ init python in np_util:
         for chunk in _music_download.iter_content(chunk_size = np_globals.CatchSize):
             if chunk:
                 _flac.write(chunk)
+        _flac.close()
         return True
 
     def Music_Download_2(id):
@@ -483,6 +477,7 @@ init python in np_util:
         for chunk in _music_download.iter_content(chunk_size = np_globals.CatchSize):
             if chunk:
                 _flac.write(chunk)
+        _flac.close()
         return True
 
     def Music_Deleteflac():

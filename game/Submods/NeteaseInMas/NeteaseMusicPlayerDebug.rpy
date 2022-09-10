@@ -67,8 +67,6 @@ screen np_debug():
                     action Function(np_fastlogin)
                 textbutton "引发一个异常":
                     action Function(np_fastlogin_fail)
-                textbutton "初始化FFmpeg环境变量":
-                    action Function(np_initFFmpeg)
                 textbutton "下载指定id歌曲":
                     action Function(np_download_music)
             hbox:
