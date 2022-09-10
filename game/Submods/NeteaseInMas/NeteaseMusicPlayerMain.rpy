@@ -113,7 +113,6 @@ init -5 python in np_globals:
     SCR_MENU_XALIGN = -0.05
 
 init python in np_util:
-    from urllib import quote
     import json
     import requests
     import requests.utils as requtils
@@ -126,7 +125,7 @@ init python in np_util:
     import threading
     import os, sys
     import store.songs as songs
-    import urllib3
+    import urllib
     import time
     from store.mas_submod_utils import submod_log
 
@@ -254,7 +253,7 @@ init python in np_util:
         返回 结果list
         """
         res = list()
-        keyword = urllib3.quote(keyword.encode('utf-8'))
+        keyword = urllib.parse.quote(keyword.encode('utf-8'))
         url = np_globals.Mainurl + np_globals.Search + keyword + np_globals.SearchToLimit
         search = requests.get(url, verify = np_globals.VerifyPath, headers=np_globals.Header)
         result = search.json()
@@ -339,7 +338,7 @@ init python in np_util:
         if login.status_code != 200:
             renpy.notify("登录错误代码 - {}\n请考虑更换API/等待API风控结束/使用短信验证码/更新API".format(login.status_code))
         np_globals.Cookies = login.cookies
-        Save_Cookies()
+        Save_Cookies(login.cookies)
         Music_Login_Status()
         return np_globals.Np_Status
 
