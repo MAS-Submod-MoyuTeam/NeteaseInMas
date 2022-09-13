@@ -168,7 +168,12 @@ label np_play_musicid:
             m "再试一遍如何, [player]?"
             show monika idle
             return
-        $ np_util.Music_GetDetail()
+        python:
+            try:
+                np_util.Music_GetDetail()
+            except:
+                # 重试一遍
+                np_util.Music_GetDetail()
         $ np_util.Music_Deleteflac()
         m 3hub "搞定~{w=3}{nw}"
         call np_timed_text_events_wrapup

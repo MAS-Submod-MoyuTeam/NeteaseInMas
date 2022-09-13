@@ -327,9 +327,12 @@ init python in np_util:
         loginjson = login.json()
         submod_log.debug("url:{}".format(url))
         submod_log.debug("respond:{}".format(str(loginjson)))
-        failmessage = ""
+        try:
+            failmessage = loginjson['message']
+        except:
+            failmessage = None
         if login.status_code != 200:
-            renpy.notify("登录错误代码 - {}\n请考虑更换API/等待API风控结束/使用短信验证码/更新API".format(login.status_code))
+            renpy.notify("登录错误代码 - {}\n请考虑更换API/等待API风控结束/使用短信验证码/更新API\n查看submod_log可以查看详细信息\n返回错误信息：{}".format(login.status_code, failmessage))
         np_globals.Cookies = login.cookies
         Save_Cookies(login.cookies)
         Music_Login_Status()
@@ -351,9 +354,12 @@ init python in np_util:
         loginjson = login.json()
         submod_log.debug("url:{}".format(url))
         submod_log.debug("respond:{}".format(str(loginjson)))
-        failmessage = ""
+        try:
+            failmessage = loginjson['message']
+        except:
+            failmessage = None
         if login.status_code != 200:
-            renpy.notify("登录错误代码 - {}\n请考虑更换API/等待API风控结束/使用短信验证码/更新API\n查看submod_log可以查看详细信息".format(login.status_code))
+            renpy.notify("登录错误代码 - {}\n请考虑更换API/等待API风控结束/使用短信验证码/更新API\n查看submod_log可以查看详细信息\n返回错误信息：{}".format(login.status_code, failmessage))
         np_globals.Cookies = login.cookies
         Save_Cookies(np_globals.Cookies)
         Music_Login_Status()
