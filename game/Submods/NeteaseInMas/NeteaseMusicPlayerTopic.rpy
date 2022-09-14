@@ -5,6 +5,7 @@ default persistent._np_max_retry = 9
 define NP_CONMODE_MP3 = 1
 define NP_CONMODE_WAV = 2
 default persistent.np_start_loopplay = False
+default persistent._np_downtimeout = 100
 init 5 python:
     addEvent(
             Event(
@@ -114,7 +115,7 @@ label np_play_musicid:
                     renpy.say(m, "[r]{nw}")
                 while not stat:
                     t=t+1
-                    if t > 100:
+                    if t > persistent._np_downtimeout:
                         stat=None
                         break
                     if t > 20:
@@ -288,6 +289,9 @@ label np_show_setting:
             "在播放歌曲时，转码后的最大尝试播放次数，默认为9"
             "每次重试的间隔为1.5s"
             $ persistent._np_max_retry = str(mas_input("输入非数字可能会导致异常, 当前为[persistent._np_max_retry]"))
+        "下载等待最大次数":
+            "下载时等待的最高次数，默认为100"
+            $ persistent._np_downtimeout = int(mas_input("输入非数字可能会导致异常, 当前为[persistent._np_max_retry]"))
         "启动时播放缓存":
             "这将导致启动后不会播放上次播放的歌曲，而是自动播放已经缓存过的所有歌曲"
             "如果在播放缓存期间删除缓存，可能会导致异常"
