@@ -174,7 +174,10 @@ label np_play_musicid:
                 np_util.Music_GetDetail()
             except:
                 # 重试一遍
-                np_util.Music_GetDetail()
+                try:
+                    np_util.Music_GetDetail()
+                except Exception as e:
+                    store.mas_submod_utils.submod_log.error("查询歌曲信息失败：{}".format(e))
         $ np_util.Music_Deleteflac()
         m 3hub "搞定~{w=3}{nw}"
         call np_timed_text_events_wrapup
