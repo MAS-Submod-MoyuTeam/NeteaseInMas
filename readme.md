@@ -2,20 +2,23 @@
 内置于Monika After Story的网易云音乐播放器。
 
 ***注意:只支持Windows 可能不兼容Youtube Music和Night Music***      
-> 本子模组并不能播放网易云本来就没版权的音乐     
-> 如果你没有黑胶vip，那么部分需要版权的音乐也无法播放   
-> 以上情况都会提示下载失败   
+> 如果你没有黑胶vip，那么部分需要版权的音乐将只能播放试听片段或无法播放   
+> 也许能播放变灰的歌曲，前提是你已经收藏过  
+
+## 特色
+
+* 支持打开自己的‘我喜欢’歌单
+* 循环播放缓存
+* 功能可以方便的在 '额外功能' 按钮使用
+* 启动时播放上次播放的音乐
 
 ## 安装
 
-> 因为使用的API出现了问题，现在调用手机登录接口会返回-460异常，但是搜索功能可以正常使用
-> 可以提前在客户端绑定163邮箱，用邮箱登录
-
-1.确保使用的是最新汉化版本MAS.  
-2.从[Release](https://github.com/PencilMario/NeteaseInMas/releases)处下载最新的版本.  
-3.关闭游戏, 将zip中的文件合并到您的`DDLC`/`MAS_CN001***/Monika After Story`文件夹内, 或者是`DDLC.exe`/`MAS.exe`所在的位置  
-4.可选择安装[Paste](https://github.com/Legendkiller21/MAS-Submods-Paste)（允许复制粘贴）和/或[Submod Updater Plugin](https://github.com/Booplicate/MAS-Submods-SubmodUpdaterPlugin)（允许通过游戏内更新程序更新 submods.)      
-5.(可选项) 根据`使用方法.docx`创建属于你自己的网易云音乐API。
+1. 确保使用的是最新汉化版本MAS.  
+2. 从[Release](https://github.com/PencilMario/NeteaseInMas/releases)处下载最新的版本.  
+3. 关闭游戏, 将zip中的文件合并到您的`DDLC`/`MAS_CN001***/Monika After Story`文件夹内, 或者是`DDLC.exe`/`MAS.exe`所在的位置  
+4. 可选择安装[Paste](https://github.com/Legendkiller21/MAS-Submods-Paste)（允许复制粘贴）和/或[Submod Updater Plugin](https://github.com/Booplicate/MAS-Submods-SubmodUpdaterPlugin)（允许通过游戏内更新程序更新 submods.)      
+5. (可选项) 根据`使用方法.docx`创建属于你自己的网易云音乐API。
 
 
 如果您正确安装了所有内容, 那么文件夹结构应该是这样的:
@@ -50,11 +53,11 @@
 
 ## 使用方法  
 
-0.参照`使用方法.docx`, 创建你自己的网易云音乐API（这非必须）  
-1.打开MAS, 进入设置-子模组.  
+0. 参照`使用方法.docx`, 创建你自己的网易云音乐API（这非必须）  
+1. 打开MAS, 进入设置-子模组.  
 2. 提前将你的网易云账号绑定一个163邮箱  
 3. 在设置界面，选择邮箱登录  
-4.所有话题都在`嘿, 莫妮卡-Netease Music`内.  
+4. 所有话题都在`嘿, 莫妮卡-Netease Music`内.  
 
 ## 提示
 
@@ -64,8 +67,9 @@
 
 
 ## 特别感谢
+
 [NeteaseCloudMusicApi](https://github.com/Binaryify/NeteaseCloudMusicApi) 本子模组使用的API, 没有这个就没有本子模组.  
-[YoutubeMusic](https://github.com/Booplicate/MAS-Submods-YouTubeMusic) 本模组部分代码参考了YM的设计.  
+[YoutubeMusic](https://github.com/Booplicate/MAS-Submods-YouTubeMusic) 本模组部分代码参考了YM的设计，同时也是本模组的灵感来源.  
 [MonikaAfterStory](https://github.com/Monika-After-Story/MonikaModDev) 本模组部分代码参考了MAS的设计.  
 
 星光 - 彩蛋设计  
