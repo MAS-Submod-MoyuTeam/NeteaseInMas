@@ -274,9 +274,10 @@ label np_show_setting:
             "下载模式有两个选项"
             "接口song/id和song/download/id"
             "song/id可以在非登录状态使用，而song/download/id必须登录使用"
-            "song/id对于部分歌曲(需要VIP)可能只能播放试听片段"
-            "登陆后，这两个接口下载的歌曲品质一般相同"
-            #"对于flac格式，song/id的速度可能慢于song/download/id，可能会导致超时"
+            "song/id主要用于试听歌曲"
+            "song/download/id用于客户端下载歌曲"
+            "使用 /song/url 接口获取的是歌曲试听 url, 但存在部分歌曲在非 VIP 账号上可以下载无损音质而不能试听无损音质, 使用song/download/id可使非 VIP 账号获取这些歌曲的无损音频"
+            "一般两个下载接口没有下载速度区别，而且下载时会下载能获取到的最高音质（一首flac格式占用50MB左右，而mp3约为10MB）"
             "两者都无法播放无版权音乐和需要黑胶VIP的音乐"
             menu:
                 "请选择下载模式, 当前为[mode]"
