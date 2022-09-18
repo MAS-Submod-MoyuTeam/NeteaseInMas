@@ -146,24 +146,25 @@ label np_play_musicid:
                 return
 
             if np_globals.Music_Type != "mp3":
-                $ np_util.Music_ToWav()
-                m 1eua "等我把这首歌转码好.{w=1.5}.{w=1.5}.{w=1.5}{nw}"
-            
+                $ a = mas_threading.MASAsyncWrapper(np_util.Music_ToWav)
+                $ a.start()
+                m 1eua "等我把这首歌转码好.{w=0.5}.{w=0.5}.{w=0.5}{nw}"
+            else:
+                catched = True
         python:
             import time, os
             retry = 0
             FAILED = False
             npsong = (np_globals.Catch + "/" + np_globals.Music_Id + '.' +  np_globals.Music_Type).replace("\\","/")
             while True:
-                if not renpy.loadable(npsong):
+                if not a.get() is None and catched == False:
                     renpy.notify("转码时间比预计要长一些...\n最多重试[persistent._np_max_retry]次")
                     _history_list.pop()
                     retry = retry + 1
-                    time.sleep(1.5)
                     if retry > persistent._np_max_retry:
                         FAILED = True
                         break
-                    renpy.say(m, "第[retry]次重试...{nw}")
+                    renpy.say(m, "第[retry]次重试...{w=1.5}{nw}")
                 else:
                     np_util.Music_Play(np_globals.Music_Id)
                     break

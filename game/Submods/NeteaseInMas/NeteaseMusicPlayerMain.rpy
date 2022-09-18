@@ -307,6 +307,8 @@ init python in np_util:
         st.dwFlags=subprocess.STARTF_USESHOWWINDOW
         st.wShowWindow=subprocess.SW_HIDE
         a = subprocess.Popen(cmd, startupinfo=st)
+        return a.communicate()
+
 
     def Get_OutIp():
         np_globals.Outip=requests.get('http://ifconfig.me/ip', headers=np_globals.Header).text.strip()
