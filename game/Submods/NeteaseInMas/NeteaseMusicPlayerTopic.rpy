@@ -150,7 +150,7 @@ label np_play_musicid:
                 $ a.start()
                 m 1eua "等我把这首歌转码好.{w=0.5}.{w=0.5}.{w=0.5}{nw}"
             else:
-                catched = True
+                $ catched = True
         python:
             import time, os
             retry = 0
@@ -164,7 +164,7 @@ label np_play_musicid:
                     if retry > persistent._np_max_retry:
                         FAILED = True
                         break
-                    renpy.say(m, "第[retry]次重试...{w=1.5}{nw}")
+                    renpy.say(m, "第[retry]次重试...{w=0.5}{nw}")
                 else:
                     np_util.Music_Play(np_globals.Music_Id)
                     break
@@ -230,9 +230,9 @@ label np_show_userplaylist:
             a.start()
             stat = False
             while not stat:
-                 renpy.say(m, "等我一下{fast}.{w=0.15}.{w=0.15}.{w=0.15}{nw}")
-                 _history_list.pop()
-                 stat = a.done()
+                renpy.say(m, "等我一下{fast}.{w=0.15}.{w=0.15}.{w=0.15}{nw}")
+                _history_list.pop()
+                stat = a.done()
 
         m 1eub "我知道你喜欢什么了哦, [player].{w=2}{nw}"
     call display_np_music_menu
@@ -295,8 +295,7 @@ label np_show_setting:
             $ persistent._NP_search_limit = str(mas_input("输入非数字可能会导致异常, 当前为[persistent._NP_search_limit]"))
             $ np_globals.SearchLimit = persistent._NP_search_limit
         "最大重试次数":
-            "在播放歌曲时，转码后的最大尝试播放次数，默认为9"
-            "每次重试的间隔为1.5s"
+            "在播放歌曲时，转码的最大尝试次数，默认为9"
             $ persistent._np_max_retry = str(mas_input("输入非数字可能会导致异常, 当前为[persistent._np_max_retry]"))
         "下载等待最大次数":
             "下载时等待的最高次数，默认为100"

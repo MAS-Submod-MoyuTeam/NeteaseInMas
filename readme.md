@@ -3,11 +3,9 @@
 
 > ⛔注意：本模组已经停止对MAS版本<0.13.0进行维护，旧版本最后支持的版本为`1.6.1`
 
-***注意:只支持Windows 可能不兼容Youtube Music和Night Music***      
-> 本子模组并不能播放网易云本来就没版权的音乐     
-> 如果你没有黑胶vip，那么部分需要版权的音乐也无法播放   
-> 以上情况都会提示下载失败   
-
+***注意:只支持Windows 可能不兼容Youtube Music和Night Music***  
+> 如果你没有黑胶vip，那么部分需要版权的音乐将只能播放试听片段或无法播放  
+> 也许能播放变灰的歌曲，前提是你已经收藏过  
 ## 安装
 
 1.确保使用的是最新汉化版本MAS.  
@@ -61,8 +59,8 @@
 * 安装如果冲突, 替换与否都可、
 * 提示风控时，请参考`使用方法.docs`更新你的API（我会自行更新公开api）
 
-
 ## 特别感谢
+
 [NeteaseCloudMusicApi](https://github.com/Binaryify/NeteaseCloudMusicApi) 本子模组使用的API, 没有这个就没有本子模组.  
 [YoutubeMusic](https://github.com/Booplicate/MAS-Submods-YouTubeMusic) 本模组部分代码参考了YM的设计.  
 [MonikaAfterStory](https://github.com/Monika-After-Story/MonikaModDev) 本模组部分代码参考了MAS的设计.  

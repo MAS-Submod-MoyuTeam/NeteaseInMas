@@ -170,11 +170,7 @@ screen np_login():
             yfill False
             spacing 5
             hbox:
-                text "由于服务端API缓存系统, 需要等待2分钟左右等待状态刷新."
-            hbox:
-                text "如果手机验证码不为空，那么密码将失效. 切勿乱点，每天验证码条数极为有限"
-            hbox:
-                text "最近手机登录出现了问题，建议使用163邮箱登录 :)\n"
+                text "提示：如果手机验证码不为空，那么将无视密码的输入"
 
             hbox:
                 textbutton "<点击输入手机号/163邮箱>":

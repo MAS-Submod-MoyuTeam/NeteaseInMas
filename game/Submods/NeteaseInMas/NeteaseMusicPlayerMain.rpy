@@ -391,14 +391,19 @@ init python in np_util:
         np_globals.ReqCod = send.status_code
         if send.status_code == 200:
             np_globals.GetCaptchaTime=time.time()
-            return renpy.notify("发送成功，请注意查收")
-        else:
             sendjson=send.json()
             try:
-                renpy.notify("发送失败：{}".format(sendjson['message']))
+                sendjson['message']
+                try:
+                    renpy.notify("发送失败：{}".format(sendjson['message']))
+                except:
+                    renpy.notify("发送失败：{}".format(sendjson['code']))
+                return False
             except:
-                renpy.notify("发送失败：{}".format(sendjson['code']))
-            return False
+                return renpy.notify("发送成功，请注意查收")
+                
+        else:
+            renpy.notify('发送失败，请检查网络连接')
 
     def Music_Login_Status():
         """
