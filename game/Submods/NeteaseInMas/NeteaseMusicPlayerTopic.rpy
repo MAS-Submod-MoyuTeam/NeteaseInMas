@@ -110,20 +110,27 @@ label np_play_musicid:
             python:
                 stat = False
                 r = res.ready
+                catchsize1 = 0
+                catchsize2 = 0
                 t=0
                 if np_globals.debug:
                     renpy.say(m, "[r]{nw}")
                 while not stat:
+                    catchsize2 = round(np_util.Catch_size()/1024/1024, 2)
+                    downsize = (catchsize1 - catchsize2)/0.75
                     t=t+1
                     if t > persistent._np_downtimeout:
                         stat=None
                         break
                     if t > 20:
-                        renpy.say(m, "([t]/100)等我下好这首歌{fast}.{w=0.25}.{w=0.25}.{w=0.25}{nw}")
+                        renpy.say(m, "([downsize]MB/S)([t]/[persistent._np_downtimeout])等我下好这首歌{fast}.{w=0.25}.{w=0.25}.{w=0.25}{nw}")
+                    else if t > 2:
+                        renpy.say(m, "([downsize]MB/S)等我下好这首歌{fast}.{w=0.25}.{w=0.25}.{w=0.25}{nw}")
                     else:
                         renpy.say(m, "等我下好这首歌{fast}.{w=0.25}.{w=0.25}.{w=0.25}{nw}")
                     _history_list.pop()
                     stat = res.get()
+                    catchsize1 = catchsize2
                     if stat == False:
                         break
             if stat == True:

@@ -89,7 +89,7 @@ init -5 python:
 screen np_setting_pane():
     python:
         np_screen_tt = store.renpy.get_screen("submods", "screens").scope["tooltip"]
-        np_catchsize = np_util.Catch_size()/1024/1024
+        np_catchsize = round(np_util.Catch_size()/1024/1024, 2)
     $ warn_message = "Netease Music不会将您的密码上传至任何第三者, 且密码上传时先在本地使用MD5加密. 下载时要确保从正确的渠道下载，因为别人发的版本可能存在后门:)\n官方Github存储库：{a=https://github.com/MAS-Submod-MoyuTeam/NeteaseInMas}点我{/a}"
 #    """
 #    Submod菜单:
