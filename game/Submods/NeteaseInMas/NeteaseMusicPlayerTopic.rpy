@@ -109,22 +109,19 @@ label np_play_musicid:
             $ res.start()
             python:
                 stat = False
-                r = res.ready
-                catchsize1 = 0
+                catchsize1 = round(np_util.Catch_size()/1024/1024, 2)
                 catchsize2 = 0
                 t=0
-                if np_globals.debug:
-                    renpy.say(m, "[r]{nw}")
                 while not stat:
                     catchsize2 = round(np_util.Catch_size()/1024/1024, 2)
-                    downsize = (catchsize1 - catchsize2)/0.75
+                    downsize = round((catchsize2 - catchsize1)/0.75, 2)
                     t=t+1
                     if t > persistent._np_downtimeout:
                         stat=None
                         break
                     if t > 20:
                         renpy.say(m, "([downsize]MB/S)([t]/[persistent._np_downtimeout])等我下好这首歌{fast}.{w=0.25}.{w=0.25}.{w=0.25}{nw}")
-                    else if t > 2:
+                    elif t > 1:
                         renpy.say(m, "([downsize]MB/S)等我下好这首歌{fast}.{w=0.25}.{w=0.25}.{w=0.25}{nw}")
                     else:
                         renpy.say(m, "等我下好这首歌{fast}.{w=0.25}.{w=0.25}.{w=0.25}{nw}")
