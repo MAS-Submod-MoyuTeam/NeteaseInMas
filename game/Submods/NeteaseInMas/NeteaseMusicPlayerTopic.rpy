@@ -92,6 +92,7 @@ label np_play_musicid:
         call np_timed_text_events_prep
         m 1dsc "等我下好这首歌...{nw}"
         python:
+            conv = mas_threading.MASAsyncWrapper(np_util.Music_ToWav)
             import os
             if os.path.exists(np_globals.Catch + "/" + np_globals.Music_Id + ".mp3") or os.path.exists(np_globals.Catch + "/" + np_globals.Music_Id + ".wav"):
                 # 本地存在缓存
@@ -146,9 +147,8 @@ label np_play_musicid:
                 return
 
             if np_globals.Music_Type != "mp3":
-                $ a = mas_threading.MASAsyncWrapper(np_util.Music_ToWav)
-                $ a.start()
-                m 1eua "等我把这首歌转码好.{w=0.5}.{w=0.5}.{w=0.5}{nw}"
+                $ conv.start()
+                m 1eua "等我把这首歌转码好.{w=1}.{w=1}.{w=1}{nw}"
             else:
                 $ catched = True
         python:
@@ -157,7 +157,7 @@ label np_play_musicid:
             FAILED = False
             npsong = (np_globals.Catch + "/" + np_globals.Music_Id + '.' +  np_globals.Music_Type).replace("\\","/")
             while True:
-                if not a.get() is None and catched == False:
+                if not conv.get() is None and catched == False:
                     renpy.notify("转码时间比预计要长一些...\n最多重试[persistent._np_max_retry]次")
                     _history_list.pop()
                     retry = retry + 1
