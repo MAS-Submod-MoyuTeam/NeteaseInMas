@@ -177,12 +177,13 @@ init python in np_util:
             True/False
         """
         API = requests.get(np_globals.Mainurl, verify = np_globals.VerifyPath, headers=np_globals.Header)
-        np_globals.ReqCode = API.status_code
-        if API.status_code != 200:
-            return False
-        else:
+        try:
+            API = API.json()
+            store.np_globals.version = API['data']['version']
             return True
-
+        except:
+            store.np_globals.version = "0.0.0"
+            return False
     def Check_FFmpeg_init():
         a = os.getenv('Path')
         if a.find(np_globals.FFmpegDir) == -1:

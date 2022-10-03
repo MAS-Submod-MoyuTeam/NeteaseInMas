@@ -110,12 +110,12 @@ screen np_setting_pane():
         text "- 正在播放: [np_globals.Music_Name] | [np_globals.Music_Alia] | [np_globals.Music_Author]"
 
         if bool(persistent._NP_API_key_able):
-            text "API接口正常":
+            text ("API版本：" + store.globals.version):
                 xalign 1.0 yalign 0.0
                 xoffset -10
                 style "main_menu_version"
         else:
-            text "API接口状态异常, 请检查连接性, 填写是否正确.":
+            text "API状态异常, 请检查连接性, 填写是否正确.":
                 xalign 1.0 yalign 0.0
                 xoffset -10
                 style "main_menu_version"
