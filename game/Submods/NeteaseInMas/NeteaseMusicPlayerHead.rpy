@@ -3,7 +3,7 @@ init -990 python:
         author="P",
         name="Netease Music",
         description="在MAS里播放来自网易云的音乐.\n强烈建议使用{a=https://github.com/Legendkiller21/MAS-Submods-Paste}{i}{u}Paste{/u}{/i}{/a}子模组来进行复制粘贴操作。",
-        version='1.6.1',
+        version='1.7.0',
         settings_pane="np_setting_pane"
     )
 init -989 python:
@@ -89,7 +89,7 @@ init -5 python:
 screen np_setting_pane():
     python:
         np_screen_tt = store.renpy.get_screen("submods", "screens").scope["tooltip"]
-        np_catchsize = np_util.Catch_size()/1024/1024
+        np_catchsize = round(np_util.Catch_size()/1024/1024, 2)
     $ warn_message = "Netease Music不会将您的密码上传至任何第三者, 且密码上传时先在本地使用MD5加密. 下载时要确保从正确的渠道下载，因为别人发的版本可能存在后门:)\n官方Github存储库：{a=https://github.com/MAS-Submod-MoyuTeam/NeteaseInMas}点我{/a}"
 #    """
 #    Submod菜单:
@@ -110,12 +110,12 @@ screen np_setting_pane():
         text "- 正在播放: [np_globals.Music_Name] | [np_globals.Music_Alia] | [np_globals.Music_Author]"
 
         if bool(persistent._NP_API_key_able):
-            text "API接口正常":
+            text ("API版本：" + store.globals.version):
                 xalign 1.0 yalign 0.0
                 xoffset -10
                 style "main_menu_version"
         else:
-            text "API接口状态异常, 请检查连接性, 填写是否正确.":
+            text "API状态异常, 请检查连接性, 填写是否正确.":
                 xalign 1.0 yalign 0.0
                 xoffset -10
                 style "main_menu_version"
@@ -170,11 +170,7 @@ screen np_login():
             yfill False
             spacing 5
             hbox:
-                text "由于服务端API缓存系统, 需要等待2分钟左右等待状态刷新."
-            hbox:
-                text "如果手机验证码不为空，那么密码将失效. 切勿乱点，每天验证码条数极为有限"
-            hbox:
-                text "最近手机登录出现了问题，建议使用163邮箱登录 :)\n"
+                text "提示：如果手机验证码不为空，那么将无视密码的输入"
 
             hbox:
                 textbutton "<点击输入手机号/163邮箱>":
@@ -476,5 +472,4 @@ label display_np_music_menu:
                 
     $ np_globals.menu_open = False
     return _return
-
 

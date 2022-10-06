@@ -33,6 +33,8 @@ init 1 python:
 
 init 999 python:
     def np_check_eggs(keyword):
+        if keyword == '':
+            return None
         egg_label = ""
         for i in np_eggs:
             if i[0].find(keyword) != -1:

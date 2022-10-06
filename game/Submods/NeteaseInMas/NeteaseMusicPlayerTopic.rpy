@@ -5,6 +5,7 @@ default persistent._np_max_retry = 9
 define NP_CONMODE_MP3 = 1
 define NP_CONMODE_WAV = 2
 default persistent.np_start_loopplay = False
+default persistent._np_downtimeout = 100
 init 5 python:
     addEvent(
             Event(
@@ -91,6 +92,7 @@ label np_play_musicid:
         call np_timed_text_events_prep
         m 1dsc "等我下好这首歌...{nw}"
         python:
+            conv = mas_threading.MASAsyncWrapper(np_util.Music_ToWav)
             import os
             if os.path.exists(np_globals.Catch + "/" + np_globals.Music_Id + ".mp3") or os.path.exists(np_globals.Catch + "/" + np_globals.Music_Id + ".wav"):
                 # 本地存在缓存
@@ -108,42 +110,61 @@ label np_play_musicid:
             $ res.start()
             python:
                 stat = False
-                r = res.ready
-                if np_globals.debug:
-                    renpy.say(m, "[r]{nw}")
+                catchsize1 = round(np_util.Catch_size()/1024/1024, 2)
+                catchsize2 = 0
+                t=0
                 while not stat:
-                    renpy.say(m, "等我下好这首歌{fast}.{w=0.25}.{w=0.25}.{w=0.25}{nw}")
+                    catchsize2 = round(np_util.Catch_size()/1024/1024, 2)
+                    downsize = round((catchsize2 - catchsize1)/0.75, 2)
+                    t=t+1
+                    if t > persistent._np_downtimeout:
+                        stat=None
+                        break
+                    if t > 20:
+                        renpy.say(m, "([downsize]MB/S)([t]/[persistent._np_downtimeout])等我下好这首歌{fast}.{w=0.25}.{w=0.25}.{w=0.25}{nw}")
+                    elif t > 1:
+                        renpy.say(m, "([downsize]MB/S)等我下好这首歌{fast}.{w=0.25}.{w=0.25}.{w=0.25}{nw}")
+                    else:
+                        renpy.say(m, "等我下好这首歌{fast}.{w=0.25}.{w=0.25}.{w=0.25}{nw}")
                     _history_list.pop()
                     stat = res.get()
+                    catchsize1 = catchsize2
                     if stat == False:
                         break
             if stat == True:
                 m 1ksa "好了~{w=0.3}{nw}"
-            else:
+            elif stat == False:
                 m 3rksdlb "这首歌我下不了, [player].{w=1.2}{nw}"
-                m "多半是因为网易云没有版权, 换一首吧.{w=1.2}{nw}"
+                m "多半是因为网易云没有版权, 换一首或重试一下吧.{w=1.2}{nw}"
+                $ res.end()
+                call np_timed_text_events_wrapup
+                return
+            else:
+                m 3rksdlb "下载的时间有点久...{w=1.2}{nw}"
+                m "重试一下吧~{w=1.2}{nw}"
+                $ res.end()
                 call np_timed_text_events_wrapup
                 return
 
             if np_globals.Music_Type != "mp3":
-                $ np_util.Music_ToWav()
-                m 1eua "等我把这首歌转码好.{w=1.5}.{w=1.5}.{w=1.5}{nw}"
-            
+                $ conv.start()
+                m 1eua "等我把这首歌转码好.{w=1}.{w=1}.{w=1}{nw}"
+            else:
+                $ catched = True
         python:
             import time, os
             retry = 0
             FAILED = False
             npsong = (np_globals.Catch + "/" + np_globals.Music_Id + '.' +  np_globals.Music_Type).replace("\\","/")
             while True:
-                if not renpy.loadable(npsong):
+                if not conv.get() is None and catched == False:
                     renpy.notify("转码时间比预计要长一些...\n最多重试[persistent._np_max_retry]次")
                     _history_list.pop()
                     retry = retry + 1
-                    time.sleep(1.5)
                     if retry > persistent._np_max_retry:
                         FAILED = True
                         break
-                    renpy.say(m, "第[retry]次重试...{nw}")
+                    renpy.say(m, "第[retry]次重试...{w=0.5}{nw}")
                 else:
                     np_util.Music_Play(np_globals.Music_Id)
                     break
@@ -153,7 +174,15 @@ label np_play_musicid:
             m "再试一遍如何, [player]?"
             show monika idle
             return
-        $ np_util.Music_GetDetail()
+        python:
+            try:
+                np_util.Music_GetDetail()
+            except:
+                # 重试一遍
+                try:
+                    np_util.Music_GetDetail()
+                except Exception as e:
+                    store.mas_submod_utils.submod_log.error("查询歌曲信息失败：{}".format(e))
         $ np_util.Music_Deleteflac()
         m 3hub "搞定~{w=3}{nw}"
         call np_timed_text_events_wrapup
@@ -201,9 +230,9 @@ label np_show_userplaylist:
             a.start()
             stat = False
             while not stat:
-                 renpy.say(m, "等我一下{fast}.{w=0.15}.{w=0.15}.{w=0.15}{nw}")
-                 _history_list.pop()
-                 stat = a.done()
+                renpy.say(m, "等我一下{fast}.{w=0.15}.{w=0.15}.{w=0.15}{nw}")
+                _history_list.pop()
+                stat = a.done()
 
         m 1eub "我知道你喜欢什么了哦, [player].{w=2}{nw}"
     call display_np_music_menu
@@ -250,13 +279,13 @@ label np_show_setting:
             "下载模式有两个选项"
             "接口song/id和song/download/id"
             "song/id可以在非登录状态使用，而song/download/id必须登录使用"
-            "song/id对于部分歌曲(需要VIP)可能只能播放试听片段"
-            "song/id的加载速度更快"
-            "song/download/id的音质比song/id更好"
-            "如果你能登录，请优先使用song/download/id, song/id在登录/非登录状态可能有两种类型，可能更容易出bug"
+            "song/id主要用于试听歌曲"
+            "song/download/id用于客户端下载歌曲"
+            "使用 /song/url 接口获取的是歌曲试听 url, 但存在部分歌曲在非 VIP 账号上可以下载无损音质而不能试听无损音质, 使用song/download/id可使非 VIP 账号获取这些歌曲的无损音频"
+            "一般两个下载接口没有下载速度区别，而且下载时会下载能获取到的最高音质（一首flac格式占用50MB左右，而mp3约为10MB）"
             "两者都无法播放无版权音乐和需要黑胶VIP的音乐"
             menu:
-                "请选择播放模式, 当前为[mode]"
+                "请选择下载模式, 当前为[mode]"
                 "song/id":
                     $ persistent._np_playmode = NP_DOWNMODE1
                 "song/download/id":
@@ -266,9 +295,11 @@ label np_show_setting:
             $ persistent._NP_search_limit = str(mas_input("输入非数字可能会导致异常, 当前为[persistent._NP_search_limit]"))
             $ np_globals.SearchLimit = persistent._NP_search_limit
         "最大重试次数":
-            "在播放歌曲时，转码后的最大尝试播放次数，默认为9"
-            "每次重试的间隔为1.5s"
+            "在播放歌曲时，转码的最大尝试次数，默认为9"
             $ persistent._np_max_retry = str(mas_input("输入非数字可能会导致异常, 当前为[persistent._np_max_retry]"))
+        "下载等待最大次数":
+            "下载时等待的最高次数，默认为100"
+            $ persistent._np_downtimeout = int(mas_input("输入非数字可能会导致异常, 当前为[persistent._np_max_retry]"))
         "启动时播放缓存":
             "这将导致启动后不会播放上次播放的歌曲，而是自动播放已经缓存过的所有歌曲"
             "如果在播放缓存期间删除缓存，可能会导致异常"
@@ -311,4 +342,3 @@ label np_timed_text_events_wrapup:
     # 展示莫妮卡为闲置状态以防万一
     show monika idle
     return
-

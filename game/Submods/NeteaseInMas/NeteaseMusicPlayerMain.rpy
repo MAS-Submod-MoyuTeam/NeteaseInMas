@@ -94,7 +94,7 @@ init -5 python in np_globals:
     _LoginPw = None
     _LoginCaptcha = None
     # 下载缓存区大小
-    CatchSize = 12000
+    CatchSize = 120000
     Cookies = None
     Header={'Connection':'close'}
     # 上次获取验证码时间
@@ -113,7 +113,6 @@ init -5 python in np_globals:
     SCR_MENU_XALIGN = -0.05
 
 init python in np_util:
-    from urllib import quote
     import json
     import requests
     import requests.utils as requtils
@@ -178,12 +177,13 @@ init python in np_util:
             True/False
         """
         API = requests.get(np_globals.Mainurl, verify = np_globals.VerifyPath, headers=np_globals.Header)
-        np_globals.ReqCode = API.status_code
-        if API.status_code != 200:
-            return False
-        else:
+        try:
+            API = API.json()
+            store.np_globals.version = API['data']['version']
             return True
-
+        except:
+            store.np_globals.version = "0.0.0"
+            return False
     def Check_FFmpeg_init():
         a = os.getenv('Path')
         if a.find(np_globals.FFmpegDir) == -1:
@@ -295,13 +295,6 @@ init python in np_util:
         except:
             np_globals.Music_Alia = ""
     
-    def Init_FFmpeg():
-        """
-        初始化FFmpeg, 添加至环境变量
-        """
-        addpathcmd = "setx \"Path\" \"%Path%;{}\"".format(np_globals.FFmpegDir)
-        subprocess.Popen(addpathcmd)
-        store.persistent.Np_InitedFFmpeg == True
 
     def Music_ToWav():
         """
@@ -311,10 +304,12 @@ init python in np_util:
         id = np_globals.Music_Id
         outdir = np_globals.Catch
         cmd = "\"{}\" -i \"{}/{}.flac\" -ab 990k \"{}/{}.wav\" -y".format(np_globals.FFmpegexe, outdir, id, outdir, id)
-        st=subprocess.STARTUPINFO
+        st=subprocess.STARTUPINFO()
         st.dwFlags=subprocess.STARTF_USESHOWWINDOW
         st.wShowWindow=subprocess.SW_HIDE
         a = subprocess.Popen(cmd, startupinfo=st)
+        return a.communicate()
+
 
     def Get_OutIp():
         np_globals.Outip=requests.get('http://ifconfig.me/ip', headers=np_globals.Header).text.strip()
@@ -335,11 +330,14 @@ init python in np_util:
         loginjson = login.json()
         submod_log.debug("url:{}".format(url))
         submod_log.debug("respond:{}".format(str(loginjson)))
-        failmessage = ""
+        try:
+            failmessage = loginjson['message']
+        except:
+            failmessage = None
         if login.status_code != 200:
-            renpy.notify("登录错误代码 - {}\n请考虑更换API/等待API风控结束/使用短信验证码/更新API".format(login.status_code))
+            renpy.notify("登录错误代码 - {}\n请考虑更换API/等待API风控结束/使用短信验证码/更新API\n查看submod_log可以查看详细信息\n返回错误信息：{}".format(login.status_code, failmessage))
         np_globals.Cookies = login.cookies
-        Save_Cookies()
+        Save_Cookies(login.cookies)
         Music_Login_Status()
         return np_globals.Np_Status
 
@@ -359,9 +357,12 @@ init python in np_util:
         loginjson = login.json()
         submod_log.debug("url:{}".format(url))
         submod_log.debug("respond:{}".format(str(loginjson)))
-        failmessage = ""
+        try:
+            failmessage = loginjson['message']
+        except:
+            failmessage = None
         if login.status_code != 200:
-            renpy.notify("登录错误代码 - {}\n请考虑更换API/等待API风控结束/使用短信验证码/更新API\n查看submod_log可以查看详细信息".format(login.status_code))
+            renpy.notify("登录错误代码 - {}\n请考虑更换API/等待API风控结束/使用短信验证码/更新API\n查看submod_log可以查看详细信息\n返回错误信息：{}".format(login.status_code, failmessage))
         np_globals.Cookies = login.cookies
         Save_Cookies(np_globals.Cookies)
         Music_Login_Status()
@@ -391,14 +392,19 @@ init python in np_util:
         np_globals.ReqCod = send.status_code
         if send.status_code == 200:
             np_globals.GetCaptchaTime=time.time()
-            return renpy.notify("发送成功，请注意查收")
-        else:
             sendjson=send.json()
             try:
-                renpy.notify("发送失败：{}".format(sendjson['message']))
+                sendjson['message']
+                try:
+                    renpy.notify("发送失败：{}".format(sendjson['message']))
+                except:
+                    renpy.notify("发送失败：{}".format(sendjson['code']))
+                return False
             except:
-                renpy.notify("发送失败：{}".format(sendjson['code']))
-            return False
+                return renpy.notify("发送成功，请注意查收")
+                
+        else:
+            renpy.notify('发送失败，请检查网络连接')
 
     def Music_Login_Status():
         """
@@ -462,6 +468,7 @@ init python in np_util:
         for chunk in _music_download.iter_content(chunk_size = np_globals.CatchSize):
             if chunk:
                 _flac.write(chunk)
+        _flac.close()
         return True
 
     def Music_Download_2(id):
@@ -484,6 +491,7 @@ init python in np_util:
         for chunk in _music_download.iter_content(chunk_size = np_globals.CatchSize):
             if chunk:
                 _flac.write(chunk)
+        _flac.close()
         return True
 
     def Music_Deleteflac():
@@ -494,8 +502,11 @@ init python in np_util:
         for file_name in dirs:
             if file_name.find('flac') != -1:
                 file = np_globals.Catch + "/" + file_name
-                os.remove(file)
-
+                try:
+                    os.remove(file)
+                except Exception as e:
+                    submod_log.error("清除flac: {}".format(e))
+                    continue
     def Music_DeleteCatch():
         """
         清理缓存文件夹，如果失败就跳过
