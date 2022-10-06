@@ -2,6 +2,6 @@
 
 game/Submods/NeteaseInMas/debug.np
 
-game/Submods/NeteaseInMas/testrequest
+game/Submods/NeteaseInMas/testrequest.py
 
 *.rpyc
