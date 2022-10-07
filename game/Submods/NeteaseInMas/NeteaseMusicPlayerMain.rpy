@@ -28,7 +28,11 @@ init -5 python in np_globals:
     CookiesPath = Basedir + "/game/Submods/NeteaseInMas/Cookies/cookies.json"
 
     ######################## API
-    Mainurl = "http://neteaseapi.0721play.icu"
+    
+    Mainurl = None#"http://neteaseapi.0721play.icu"
+
+    ### API get
+    Version = "/inner/version"
 
     PhoneLogin = "/login/cellphone?phone="
     PhoneLoginPw = "&password="
@@ -111,6 +115,39 @@ init -5 python in np_globals:
     #UI位置
     SCR_MENU_AREA = (835, 40, 440, 528)
     SCR_MENU_XALIGN = -0.05
+    # api版本
+    version = None
+
+init 5 python in np_globals:
+    def change_api(api):
+        global Mainurl
+        if api == "":
+            Mainurl = "http://neteaseapi.0721play.icu"
+        elif api[-1] == "/":
+            Mainurl = api[:-1]
+        else:
+            Mainurl = api
+        if store.mas_getAPIKey("netease_apiurl") != "":
+            Mainurl = store.mas_getAPIKey("netease_apiurl")
+        try:
+            if store.np_util.Check_API_Available():
+                return True, Mainurl
+            else:
+                Mainurl = "http://neteaseapi.0721play.icu"
+                store.np_util.Check_API_Available()
+                return False, "粘贴的API链接错误！将使用默认值！"
+        except Exception as e:
+            Mainurl = "http://neteaseapi.0721play.icu"
+            store.mas_submod_utils.submod_log.error(e)
+            return False, "粘贴的API链接错误！将使用默认值！查看submod_log获取详细信息"
+        #return True, Mainurl
+    store.mas_registerAPIKey(
+        "netease_apiurl",
+        "网易云音乐 - APIurl",
+        on_change=change_api
+    )
+    if store.mas_getAPIKey("netease_apiurl") != "":
+        Mainurl = store.mas_getAPIKey("netease_apiurl")
 
 init python in np_util:
     import json
@@ -176,13 +213,14 @@ init python in np_util:
         return:
             True/False
         """
-        API = requests.get(np_globals.Mainurl, verify = np_globals.VerifyPath, headers=np_globals.Header)
         try:
+            API = requests.get(np_globals.Mainurl + np_globals.Version, verify = np_globals.VerifyPath, headers=np_globals.Header)
             API = API.json()
             store.np_globals.version = API['data']['version']
             return True
-        except:
-            store.np_globals.version = "0.0.0"
+        except Exception as e:
+            store.mas_submod_utils.submod_log.error(e)
+            store.np_globals.version = None
             return False
     def Check_FFmpeg_init():
         a = os.getenv('Path')

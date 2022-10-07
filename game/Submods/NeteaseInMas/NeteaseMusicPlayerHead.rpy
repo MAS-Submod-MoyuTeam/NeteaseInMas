@@ -109,8 +109,8 @@ screen np_setting_pane():
         text "- 当前登录: [np_globals.Np_NickName]"
         text "- 正在播放: [np_globals.Music_Name] | [np_globals.Music_Alia] | [np_globals.Music_Author]"
 
-        if bool(persistent._NP_API_key_able):
-            text ("API版本：" + store.globals.version):
+        if np_globals.version is not None:
+            text ("API版本：" + store.np_globals.version):
                 xalign 1.0 yalign 0.0
                 xoffset -10
                 style "main_menu_version"

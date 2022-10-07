@@ -52,6 +52,8 @@ screen np_debug():
             yfill False
             spacing 5
             hbox:
+                text "APIurl: [np_globals.Mainurl]"
+            hbox:
                 text "Nickname:[np_globals.Np_NickName] | ReqCode:[np_globals.ReqCode]"
             hbox:
                 text "Music_ID: [np_globals.Music_Id] | _np_music_id: [_np_music_id]"
