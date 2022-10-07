@@ -127,15 +127,13 @@ init 5 python in np_globals:
             Mainurl = api[:-1]
         else:
             Mainurl = api
-        if store.mas_getAPIKey("netease_apiurl") != "":
-            Mainurl = store.mas_getAPIKey("netease_apiurl")
         try:
             if store.np_util.Check_API_Available():
                 return True, Mainurl
             else:
                 Mainurl = "http://neteaseapi.0721play.icu"
                 store.np_util.Check_API_Available()
-                return False, "粘贴的API链接错误！将使用默认值！"
+                return False, "粘贴的API链接错误！将使用默认值！查看submod_log获取详细信息"
         except Exception as e:
             Mainurl = "http://neteaseapi.0721play.icu"
             store.mas_submod_utils.submod_log.error(e)
@@ -148,6 +146,8 @@ init 5 python in np_globals:
     )
     if store.mas_getAPIKey("netease_apiurl") != "":
         Mainurl = store.mas_getAPIKey("netease_apiurl")
+    else:
+        Mainurl = "http://neteaseapi.0721play.icu"
 
 init python in np_util:
     import json
