@@ -171,6 +171,7 @@ screen np_login():
             spacing 5
             hbox:
                 text "提示：如果手机验证码不为空，那么将无视密码的输入"
+                text "请注意关闭加速器/梯子，否则可能无法登录"
 
             hbox:
                 textbutton "<点击输入手机号/163邮箱>":
