@@ -157,7 +157,7 @@ screen np_setting_pane():
         textbutton "> 清理歌曲缓存 - [np_catchsize]MB":
             action Function(np_del_catch)
 
-        textbutton "> 重新获取本机IP"
+        textbutton "> 重新获取本机IP":
             hovered SetField(np_screen_tt, "value", np_buttontip_whygetoutip)
             unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
             action Function(np_get_out_ip)
