@@ -80,11 +80,16 @@ init -5 python:
         np_util.Get_User_Playlist()
         renpy.show_screen("np_message", message = "ok")
 
+    def np_get_out_ip():
+        np_util.Get_OutIp()
+        renpy.show_screen("np_message", message = "ok")
+
     np_buttontip_login = "登录网易云音乐"
     np_buttontip_forcerefresh = "强制检测登录状态"
     np_buttontip_logout = "登出网易云音乐"
     np_buttontip_playermusiclist = "获取登录用户的'我喜欢'歌单"
     np_buttontip_refreshcookie = "用于刷新Cookies的有效时间(可能并不好用)"
+    np_buttontip_whygetoutip = "重新获取本机的外部IP，用于刷新因为加速器导致定位ip在国外导致风控问题。"
 
 screen np_setting_pane():
     python:
@@ -151,6 +156,11 @@ screen np_setting_pane():
 
         textbutton "> 清理歌曲缓存 - [np_catchsize]MB":
             action Function(np_del_catch)
+
+        textbutton "> 重新获取本机IP"
+            hovered SetField(np_screen_tt, "value", np_buttontip_whygetoutip)
+            unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
+            action Function(np_get_out_ip)
 
         if np_globals.debug:
             textbutton "> debug":
