@@ -366,13 +366,13 @@ init python in np_util:
         url=url + "&timestamp={}".format(int(round(time.time()*1000)))+np_globals.realIP+np_globals.Outip
         login = requests.get(url, verify=np_globals.VerifyPath, headers=np_globals.Header)
         loginjson = login.json()
-        submod_log.debug("url:{}".format(url))
-        submod_log.debug("respond:{}".format(str(loginjson)))
         try:
             failmessage = loginjson['message']
         except:
             failmessage = None
         if login.status_code != 200:
+            submod_log.debug("url:{}".format(url))
+            submod_log.debug("respond:{}".format(str(loginjson)))
             renpy.notify("登录错误代码 - {}\n请考虑更换API/等待API风控结束/使用短信验证码/更新API/重启\n查看submod_log可以查看详细信息\n以下为服务器返回错误信息：\n===================\n\"{}\"".format(login.status_code, failmessage))
         np_globals.Cookies = login.cookies
         Save_Cookies(login.cookies)
@@ -393,14 +393,14 @@ init python in np_util:
         url=url + "&timestamp={}".format(int(round(time.time()*1000)))+np_globals.realIP+np_globals.Outip
         login = requests.get(url, verify=np_globals.VerifyPath, headers=np_globals.Header)
         loginjson = login.json()
-        submod_log.debug("url:{}".format(url))
-        submod_log.debug("respond:{}".format(str(loginjson)))
         try:
             failmessage = loginjson['message']
         except:
             failmessage = None
         if login.status_code != 200:
             renpy.notify("登录错误代码 - {}\n请考虑更换API/等待API风控结束/使用短信验证码/更新API/重启\n查看submod_log可以查看详细信息\n以下为服务器返回错误信息：\n===================\n\"{}\"".format(login.status_code, failmessage))
+            submod_log.debug("url:{}".format(url))
+            submod_log.debug("respond:{}".format(str(loginjson)))
         np_globals.Cookies = login.cookies
         Save_Cookies(np_globals.Cookies)
         Music_Login_Status()
