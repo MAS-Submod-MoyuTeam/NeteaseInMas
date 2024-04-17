@@ -3,7 +3,7 @@ init -990 python:
         author="P",
         name="Netease Music",
         description="在MAS里播放来自网易云的音乐.\n强烈建议使用{a=https://github.com/Legendkiller21/MAS-Submods-Paste}{i}{u}Paste{/u}{/i}{/a}子模组来进行复制粘贴操作。",
-        version='1.7.2',
+        version='1.8.0',
         settings_pane="np_setting_pane"
     )
 init -989 python:
@@ -127,29 +127,29 @@ screen np_setting_pane():
         #> !已登录 ? 登陆账号 : 注销账号
 
         if not np_globals.Np_Status:
-            textbutton "> 登录账号":
-                action Show("np_login")
-                hovered SetField(np_screen_tt, "value", np_buttontip_login)
-                unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
-            textbutton "> 强制刷新登录":
-                action Function(np_force_refresh)
-                hovered SetField(np_screen_tt, "value", np_buttontip_forcerefresh)
-                unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
+            textbutton "> 扫码登陆 <当前暂不支持, 请前往设置手动设置歌单id>"
+                #action Show("np_login")
+                #hovered SetField(np_screen_tt, "value", np_buttontip_login)
+                #unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
+            #textbutton "> 强制刷新登录":
+            #    action Function(np_force_refresh)
+            #    hovered SetField(np_screen_tt, "value", np_buttontip_forcerefresh)
+            #    unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
         else:
-            textbutton "> 注销账号":
-                action Show("np_logout")
-                hovered SetField(np_screen_tt, "value", np_buttontip_logout)
-                unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
+            #textbutton "> 注销账号":
+            #    action Show("np_logout")
+            #    hovered SetField(np_screen_tt, "value", np_buttontip_logout)
+            #    unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
             textbutton "> 获取'我喜欢的音乐'":
                 hovered SetField(np_screen_tt, "value", np_buttontip_playermusiclist)
                 unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
                 action Function(np_get_ml)
-            textbutton "> 手动保存Cookies":
-                action Function(np_save_cookies)
-            textbutton "> 手动刷新Cookies":
-                hovered SetField(np_screen_tt, "value", np_buttontip_refreshcookie)
-                unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
-                action Function(np_refresh_cookies)
+            #textbutton "> 手动保存Cookies":
+            #    action Function(np_save_cookies)
+            #textbutton "> 手动刷新Cookies":
+            #    hovered SetField(np_screen_tt, "value", np_buttontip_refreshcookie)
+            #    unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
+            #    action Function(np_refresh_cookies)
         
         textbutton "> 安全性问题说明":
             action Show("np_message", message = warn_message)

@@ -11,6 +11,7 @@ init -100:
     default persistent._NP_API_key_able = False
     default persistent._NP_search_limit = "50"
     default persistent.np_restart_song = None
+    default persistent._np_force_playlist = None
 
 init -5 python in np_globals:
     import store
@@ -235,13 +236,15 @@ init python in np_util:
         """
         cookie = np_globals.Cookies
         msclist = list()
-
-        id = str(np_globals.Np_UserId)
-        url = np_globals.Mainurl + np_globals.UserPlaylist + id
-        plidr = requests.get(url, cookies = np_globals.Cookies, verify = np_globals.VerifyPath, headers=np_globals.Header)
-        plidj = plidr.json()
-        plid = str(plidj["playlist"][0]["id"])
-        url2 = np_globals.Mainurl + np_globals.PlaylistDetail + plid
+        if not store.persistent._np_force_playlist:
+            id = str(np_globals.Np_UserId)
+            url = np_globals.Mainurl + np_globals.UserPlaylist + id
+            plidr = requests.get(url, cookies = np_globals.Cookies, verify = np_globals.VerifyPath, headers=np_globals.Header)
+            plidj = plidr.json()
+            plid = str(plidj["playlist"][0]["id"])
+            url2 = np_globals.Mainurl + np_globals.PlaylistDetail + plid
+        else:
+            url2 = np_globals.Mainurl + np_globals.PlaylistDetail + str(store.persistent._np_force_playlist)
         getmusiclist = requests.get(url2, cookies = cookie , verify = np_globals.VerifyPath, headers=np_globals.Header)
         mlist = getmusiclist.json()
         for song in mlist['playlist']["tracks"]:
@@ -448,12 +451,19 @@ init python in np_util:
         """
         检查登陆状态, 离线返回False, 在线返回昵称
         """
+        if store.persistent._np_force_playlist:
+            np_globals.Np_Status = True
+            np_globals.Np_NickName = "歌单id: " + str(store.persistent._np_force_playlist)
+            np_globals.Np_UserId = ""
+            return np_globals.Np_Status 
+            
         import time
         cookie = np_globals.Cookies
         url = np_globals.Mainurl + np_globals.LoginStatus + "?&timestamp={}".format(int(time.time()*1000))
         check = requests.get(url, cookies = cookie, verify = np_globals.VerifyPath, headers=np_globals.Header)
         np_globals.ReqCode = check.status_code
         result = check.json()
+        
         try:
             profile = result["data"]["profile"]
         except:

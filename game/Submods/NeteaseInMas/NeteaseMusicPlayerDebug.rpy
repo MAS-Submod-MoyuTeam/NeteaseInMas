@@ -1,7 +1,6 @@
 init 999 python:
-    if np_globals.debug:
-        renpy.config.debug = True
-        renpy.config.developer = True
+    if renpy.config.developer:
+        np_globals.debug = True
 init -4 python:
     _np_music_id = ""
     def np_debug_check():
