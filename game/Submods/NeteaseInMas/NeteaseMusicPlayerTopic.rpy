@@ -299,7 +299,7 @@ label np_show_setting:
             $ persistent._np_max_retry = str(mas_input("输入非数字可能会导致异常, 当前为[persistent._np_max_retry]"))
         "下载等待最大次数":
             "下载时等待的最高次数，默认为100"
-            $ persistent._np_downtimeout = int(mas_input("输入非数字可能会导致异常, 当前为[persistent._np_max_retry]"))
+            $ persistent._np_downtimeout = int(mas_input("输入非数字可能会导致异常, 当前为[persistent._np_downtimeout]"))
         "启动时播放缓存":
             "这将导致启动后不会播放上次播放的歌曲，而是自动播放已经缓存过的所有歌曲"
             "如果在播放缓存期间删除缓存，可能会导致异常"
@@ -309,6 +309,21 @@ label np_show_setting:
                     $ persistent.np_start_loopplay = True
                 "禁用":
                     $ persistent.np_start_loopplay = False
+        "手动设置我喜欢歌单id":
+            "目前仅能使用二维码正常登录, 但我太懒，不想做，而且手机端也无法进行扫码"
+            "你可以在这里设置我喜欢歌单使用的id, id可以在网页端登陆后，查看链接参数即可"
+            "如 https://music.163.com/#/my/m/music/playlist?id=5478048074 其中5478048074即为歌单id"
+            "未登录状态只能获取前20首歌"
+            menu:
+                "设置":
+                    python:
+                        store.persistent._np_force_playlist = int(mas_input("输入非数字可能会导致异常, 当前为[persistent._np_force_playlist]"))
+                        store.np_util.Music_Login_Status()
+                "清除":
+                    python:
+                        store.persistent._np_force_playlist = None
+                        np_util.Music_Login_Status()
+                    return
                 
         "算了":
             return
