@@ -62,6 +62,12 @@ init -5 python in np_globals:
     MusicDetail = "/song/detail?ids="
     UserPlaylist = "/user/playlist?uid="
     PlaylistDetail = "/playlist/detail?id="
+    GetQRKey = "/login/qr/key"
+    QRCreate = "/login/qr/create?key="
+    QRCheck = "/login/qr/check?key="
+
+
+
     # 歌单内歌曲信息: playlistdetail
     # dict ["playlist"]["tracks"][num]
     # 名称 ~[name]
@@ -98,6 +104,8 @@ init -5 python in np_globals:
     _LoginPhone = None
     _LoginPw = None
     _LoginCaptcha = None
+    _QRLogin = False
+
     # 下载缓存区大小
     CatchSize = 120000
     Cookies = None
@@ -408,6 +416,46 @@ init python in np_util:
         Save_Cookies(np_globals.Cookies)
         Music_Login_Status()
         return np_globals.Np_Status
+
+    def Music_Get_QRBase64():
+        """
+        获取二维码base64编码
+
+        return:
+            (key, base64编码)
+        """
+
+        #获取图片base64编码
+        keyurl = np_globals.Mainurl + np_globals.GetQRKey
+        keyreq = requests.get(keyurl, verify = np_globals.VerifyPath, headers=np_globals.Header)
+        keyjson = keyreq.json()
+        key = keyjson["unikey"]
+        imgurl = np_globals.Mainurl + np_globals.QRCreate + key + "&qrimg=true"
+        imgreq = requests.get(imgurl, verify = np_globals.VerifyPath, headers=np_globals.Header)
+        imgjson = imgreq.json()
+        imgbase64 = imgjson['data']['qrimg']
+
+        return (key, imgbase64)
+
+    def Music_Check_Status(key):
+        checkurl = np_globals.Mainurl + np_globals.QRCheck + key
+        checkreq = requests.get(checkurl, verify = np_globals.VerifyPath, headers=np_globals.Header)
+        checkjson = checkreq.json()
+        status = checkjson['code']
+        if status == 800:
+            np_globals._QRLogin = True
+            new_cookies = checkreq.cookies
+            np_globals.Cookies.update(new_cookies)
+            Save_Cookies(np_globals.Cookies)
+            return True
+        elif status == 801:
+            return False
+        elif status == 803:
+            return False
+
+
+
+
  
     def Music_Login_Refresh():
         #刷新登录
