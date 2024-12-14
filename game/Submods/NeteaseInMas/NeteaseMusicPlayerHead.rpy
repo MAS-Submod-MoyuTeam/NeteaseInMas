@@ -127,10 +127,10 @@ screen np_setting_pane():
         #> !已登录 ? 登陆账号 : 注销账号
 
         if not np_globals.Np_Status:
-            textbutton "> 扫码登陆 <当前暂不支持, 请前往设置手动设置歌单id>"
-                #action Show("np_login")
-                #hovered SetField(np_screen_tt, "value", np_buttontip_login)
-                #unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
+            textbutton "> 扫码登陆":
+                action Show("np_qrlogin")
+                hovered SetField(np_screen_tt, "value", np_buttontip_login)
+                unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
             #textbutton "> 强制刷新登录":
             #    action Function(np_force_refresh)
             #    hovered SetField(np_screen_tt, "value", np_buttontip_forcerefresh)
@@ -205,7 +205,98 @@ screen np_login():
                 textbutton "关闭":
                     action Hide("np_login")
 
+screen np_qrlogin():
+    python:
+        def _np_qrlogin_genimg():
+            import time
+            if (np_globals.QRLastQueryCode > 800):
+                if (time.time() - np_globals.GetCaptchaTime) < 60:
+                    renpy.notify("发送失败：发送太频繁，请等待{}s后重试".format(60 - (time.time() - np_globals.GetCaptchaTime)))
+                    return False
+            np_globals.QRData = np_util.Music_Get_QRBase64()
+            np_util.Save_Image(np_globals.QRData[1], np_globals.QRImagePath)
+            np_globals.GetCaptchaTime = time.time()
+        
+        def _np_check_code():
+            if not os.path.exists(np_globals.QRImagePath) or np_globals.QRData == None:
+                return 
+            elif np_globals.QRLastQueryCode == 803:
+                np_force_refresh()
+                return
+            else:
+                np_util.Music_Check_Status(np_globals.QRData[0])
+        
+        def del_qrimage():
+            try:
+                import os
+                os.remove(np_globals.QRImagePath)
+                np_globals.QRData = None
+            except Exception as e:
+                pass
 
+        def whattime():
+            import time
+            return time.time()
+
+
+    modal True
+    zorder 215
+
+    style_prefix "confirm"
+    
+    frame:
+        vbox:
+            xfill False
+            yfill False
+            spacing 5
+
+            timer 2.0 repeat (np_globals.QRLastQueryCode != 803) action Function(_np_check_code, _update_screens=True)
+
+            hbox:
+                if os.path.exists(np_globals.QRImagePath) and np_globals.QRData != None:
+                    imagebutton:
+                        insensitive "Submods/NeteaseInMas/QR.png"
+                        idle "Submods/NeteaseInMas/QR.png"
+                        hover "Submods/NeteaseInMas/QR.png"
+                        selected_idle "Submods/NeteaseInMas/QR.png"
+                        selected_hover "Submods/NeteaseInMas/QR.png"
+
+                else:
+                    text "等待生成二维码..."
+            
+
+            hbox:
+                text "二维码状态: "
+                if np_globals.QRLastQueryCode == 800:
+                    text "已过期, 请重新生成"
+                elif np_globals.QRLastQueryCode == 801:
+                    text "请打开手机网易云音乐APP扫描二维码登陆"
+                elif np_globals.QRLastQueryCode == 802:
+                    text "请在手机网易云音乐APP中确认登陆"
+                elif np_globals.QRLastQueryCode == 803:
+                    text "授权登录成功"
+                elif np_globals.QRLastQueryCode == 0:
+                    text "请先生成二维码"
+            if config.debug:
+                hbox:
+                    text "QRLastQueryCode" + str(np_globals.QRLastQueryCode)
+                hbox:
+                    text str(whattime())
+                hbox:
+                    text str(np_globals.QRData)[:75]
+
+            hbox:
+                textbutton "关闭":
+                    action [
+                        Function(del_qrimage),
+                        Hide("np_qrlogin")
+                        ]
+                
+                if not os.path.exists(np_globals.QRImagePath):
+                    textbutton "生成二维码":
+                        action Function(_np_qrlogin_genimg, _update_screens=True)
+                else:
+                    textbutton "生成二维码(请重新打开此页面)"
 
 screen np_login_input(message, returnto, ok_action = Hide("np_login_input")):
     #登录输入账户窗口, 也用来用作通用的输入窗口

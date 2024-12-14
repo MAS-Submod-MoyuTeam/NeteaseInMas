@@ -27,6 +27,8 @@ init -5 python in np_globals:
     FFmpegexe = FFmpegDir + "/ffmpeg"
     VerifyPath = True
     CookiesPath = Basedir + "/game/Submods/NeteaseInMas/Cookies/cookies.json"
+    QRImageDir = Basedir + "/game/Submods/NeteaseInMas/"
+    QRImagePath = Basedir + "/game/Submods/NeteaseInMas/QR.png"
 
     ######################## API
     
@@ -109,10 +111,12 @@ init -5 python in np_globals:
     # 下载缓存区大小
     CatchSize = 120000
     Cookies = None
+    _QRCookie = None
     Header={'Connection':'close'}
     # 上次获取验证码时间
     GetCaptchaTime=0
-
+    QRData = None
+    QRLastQueryCode = 0
     # ip
     Outip=""
     # 返回结果
@@ -175,6 +179,7 @@ init python in np_util:
     import time
     from store.mas_submod_utils import submod_log
 
+    requests = requests.Session()
     
     def Save_Cookies(cookies):
         """
@@ -426,32 +431,46 @@ init python in np_util:
         """
 
         #获取图片base64编码
-        keyurl = np_globals.Mainurl + np_globals.GetQRKey
+        keyurl = np_globals.Mainurl + np_globals.GetQRKey + "?timestamp={}".format(int(round(time.time()*1000)))+np_globals.realIP+np_globals.Outip
         keyreq = requests.get(keyurl, verify = np_globals.VerifyPath, headers=np_globals.Header)
         keyjson = keyreq.json()
-        key = keyjson["unikey"]
-        imgurl = np_globals.Mainurl + np_globals.QRCreate + key + "&qrimg=true"
-        imgreq = requests.get(imgurl, verify = np_globals.VerifyPath, headers=np_globals.Header)
+        if not keyjson['code'] == 200:
+            raise Exception("获取二维码key失败 {}".format(keyjson))
+        np_globals._QRCookie = keyreq.cookies
+        key = keyjson['data']["unikey"]
+        imgurl = np_globals.Mainurl + np_globals.QRCreate + key + "&qrimg=true" + "&timestamp={}".format(int(round(time.time()*1000)))+np_globals.realIP+np_globals.Outip
+        imgreq = requests.get(imgurl, verify = np_globals.VerifyPath, headers=np_globals.Header, cookies=np_globals._QRCookie)
         imgjson = imgreq.json()
         imgbase64 = imgjson['data']['qrimg']
 
         return (key, imgbase64)
+    def Save_Image(b64, filename):
+        # 去除前缀
+        import base64
+        if b64.startswith('data:image/png;base64,'):
+            b64 = b64[len('data:image/png;base64,'):]
+
+        # 解码 Base64 数据
+        image_data = base64.b64decode(b64)
+
+        # 将解码的数据写入 PNG 文件
+        with open(filename, "wb") as file:
+            file.write(image_data)
 
     def Music_Check_Status(key):
-        checkurl = np_globals.Mainurl + np_globals.QRCheck + key
-        checkreq = requests.get(checkurl, verify = np_globals.VerifyPath, headers=np_globals.Header)
+        checkurl = np_globals.Mainurl + np_globals.QRCheck + key + "&timestamp={}".format(int(round(time.time()*1000)))+np_globals.realIP+np_globals.Outip+"&noCookie=true"
+        checkreq = requests.get(checkurl, verify = np_globals.VerifyPath, headers=np_globals.Header, cookies=np_globals._QRCookie)
         checkjson = checkreq.json()
         status = checkjson['code']
-        if status == 800:
+        np_globals.QRLastQueryCode = status
+        if status == 803:
             np_globals._QRLogin = True
             new_cookies = checkreq.cookies
-            np_globals.Cookies.update(new_cookies)
+            np_globals.Cookies = new_cookies
             Save_Cookies(np_globals.Cookies)
-            return True
-        elif status == 801:
-            return False
-        elif status == 803:
-            return False
+            return status
+        else:
+            return status
 
 
 
@@ -462,7 +481,7 @@ init python in np_util:
         url = np_globals.Mainurl + np_globals.RefreshLogin
         refresh = requests.get(url, cookies=np_globals.Cookies, verify = np_globals.VerifyPath, headers=np_globals.Header)
         new_cookies = refresh.cookies
-        np_globals.Cookies.update(new_cookies)
+        np_globals.Cookies = new_cookies
         Save_Cookies(np_globals.Cookies)
         
     def Music_Get_Captcha(phone):
@@ -495,7 +514,7 @@ init python in np_util:
         else:
             renpy.notify('发送失败，请检查网络连接')
 
-    def Music_Login_Status():
+    def Music_Login_Status(key = None):
         """
         检查登陆状态, 离线返回False, 在线返回昵称
         """
@@ -540,6 +559,8 @@ init python in np_util:
         np_globals.Np_NickName = "Unlogin - 未登录"
         np_globals.Np_Status = False
         store.persistent.np_Cookie = None
+        np_globals.QRLastQueryCode = 0
+        np_globals.QRData = None
         Remove_Cookies()
         #renpy.jump("np_emptylabel")
 

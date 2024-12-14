@@ -112,3 +112,8 @@ label np_play1365873163:
     python:
         np_play_music2("1365873163")
     return
+
+label generate_image:
+    python:
+        np_globals.QRData = np_util.Music_Get_QRBase64()
+        np_util.Save_Image(np_globals.QRData[1], np_globals.QRImagePath)
