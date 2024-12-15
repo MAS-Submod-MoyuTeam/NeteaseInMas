@@ -113,7 +113,8 @@ init -5 python in np_globals:
     # 下载缓存区大小
     CatchSize = 120000
     Cookies = None
-    _QRCookie = None
+    CookiesQR = ""
+    _QRCookie = None # 临时
     Header={'Connection':'close'}
     # 上次获取验证码时间
     GetCaptchaTime=0
@@ -181,8 +182,6 @@ init python in np_util:
     import time
     from store.mas_submod_utils import submod_log
 
-    requests = requests.Session()
-
     def randompngname():
         return str(int(time.time()))+'.png'
 
@@ -192,7 +191,7 @@ init python in np_util:
         IN:
             要保存的RequestsCookieJar
         """
-        cookiesDict = requtils.dict_from_cookiejar(cookies)
+        return Save_Cookies_From_Dict(cookies)
         with open(np_globals.CookiesPath, 'w') as cookie:
             json.dump(cookiesDict, cookie)
 
@@ -209,12 +208,25 @@ init python in np_util:
         """
         从CookiesPath读取Cookies，保存至np_globals.Cookies
         """
+        return Load_Cookies_to_QR()
         try:
             with open(np_globals.CookiesPath, 'r') as cookie:
                 cookiesDict = json.load(cookie)
             np_globals.Cookies = requtils.cookiejar_from_dict(cookiesDict)
         except Exception as e:
             np_globals.Cookies = None
+            submod_log.error("加载Cookies发生错误：{}".format(e))
+    
+    def Load_Cookies_to_QR():
+        """
+        从CookiesPath读取Cookies，保存至np_globals.CookiesQR
+        """
+        try:
+            with open(np_globals.CookiesPath, 'r') as cookie:
+                cookiesDict = json.load(cookie)
+            np_globals.CookiesQR = cookiesDict
+        except Exception as e:
+            np_globals.CookiesQR = None
             submod_log.error("加载Cookies发生错误：{}".format(e))
     
     def Remove_Cookies():
@@ -257,13 +269,19 @@ init python in np_util:
         if not store.persistent._np_force_playlist:
             id = str(np_globals.Np_UserId)
             url = np_globals.Mainurl + np_globals.UserPlaylist + id
-            plidr = requests.get(url, cookies = np_globals.Cookies, verify = np_globals.VerifyPath, headers=np_globals.Header)
+            if np_globals._QRLogin:
+                plidr = requests.post(url,json={'cookie': np_globals.CookiesQR}, verify = np_globals.VerifyPath, headers=np_globals.Header)
+            else:
+                plidr = requests.get(url, cookies = np_globals.Cookies, verify = np_globals.VerifyPath, headers=np_globals.Header)
             plidj = plidr.json()
             plid = str(plidj["playlist"][0]["id"])
             url2 = np_globals.Mainurl + np_globals.PlaylistDetail + plid
         else:
             url2 = np_globals.Mainurl + np_globals.PlaylistDetail + str(store.persistent._np_force_playlist)
-        getmusiclist = requests.get(url2, cookies = cookie , verify = np_globals.VerifyPath, headers=np_globals.Header)
+        if np_globals._QRLogin:
+            getmusiclist = requests.post(url2, json={'cookie': np_globals.CookiesQR}, verify=np_globals.VerifyPath, headers=np_globals.Header)
+        else:
+            getmusiclist = requests.get(url2, cookies = cookie , verify = np_globals.VerifyPath, headers=np_globals.Header)
         mlist = getmusiclist.json()
         for song in mlist['playlist']["tracks"]:
             id = str(song["id"])
@@ -470,15 +488,45 @@ init python in np_util:
         np_globals.QRLastQueryCode = status
         if status == 803:
             np_globals._QRLogin = True
-            new_cookies = checkreq.cookies
-            np_globals.Cookies = new_cookies
-            Save_Cookies(np_globals.Cookies)
+            res = Music_Login_Status_QR(checkjson['cookie'])
+            if res:
+                np_globals.CookiesQR = checkjson['cookie']
+                Save_Cookies(np_globals.CookiesQR)
             return status
         else:
             return status
 
 
-
+    def Music_Login_Status_QR(cookie):
+        """
+        检查登陆状态, 离线返回False, 在线返回昵称
+        """
+        data = {
+            'cookie': cookie
+        }
+        import time
+        cookie = np_globals.Cookies
+        url = np_globals.Mainurl + np_globals.LoginStatus + "?&timestamp={}".format(int(time.time()*1000))
+        check = requests.post(url, verify = np_globals.VerifyPath, headers=np_globals.Header, json=data)
+        np_globals.ReqCode = check.status_code
+        result = check.json()
+        
+        try:
+            profile = result["data"]["profile"]  
+        except:
+            np_globals.Np_Status = False
+            np_globals.Np_NickName = "Unlogin - 未登录"
+            np_globals.Np_UserId = ""
+            return np_globals.Np_Status
+        if result["data"]["profile"] == None:
+            np_globals.Np_Status = False
+            np_globals.Np_NickName = "Unlogin - 未登录"
+            np_globals.Np_UserId = ""
+        else:
+            np_globals.Np_Status = True
+            np_globals.Np_NickName = result["data"]["profile"]["nickname"]
+            np_globals.Np_UserId = result["data"]["profile"]["userId"]
+        return np_globals.Np_Status
 
  
     def Music_Login_Refresh():
@@ -523,6 +571,8 @@ init python in np_util:
         """
         检查登陆状态, 离线返回False, 在线返回昵称
         """
+        if np_globals._QRLogin:
+            return Music_Login_Status_QR(np_globals.CookiesQR)
         if store.persistent._np_force_playlist:
             np_globals.Np_Status = True
             np_globals.Np_NickName = "歌单id: " + str(store.persistent._np_force_playlist)
@@ -532,7 +582,10 @@ init python in np_util:
         import time
         cookie = np_globals.Cookies
         url = np_globals.Mainurl + np_globals.LoginStatus + "?&timestamp={}".format(int(time.time()*1000))
-        check = requests.get(url, cookies = cookie, verify = np_globals.VerifyPath, headers=np_globals.Header)
+        if np_globals._QRLogin:
+            check = requests.post(url, json={'cookie': np_globals.CookiesQR}, verify=np_globals.VerifyPath, headers=np_globals.Header)
+        else:
+            check = requests.get(url, cookies = cookie, verify = np_globals.VerifyPath, headers=np_globals.Header)
         np_globals.ReqCode = check.status_code
         result = check.json()
         
@@ -559,13 +612,22 @@ init python in np_util:
         """
         cookie = np_globals.Cookies
         url = np_globals.Mainurl + np_globals.Logout
-        requests.get(url, cookies = cookie, verify = np_globals.VerifyPath, headers=np_globals.Header)
+        if np_globals._QRLogin:
+            requests.post(
+                url,
+                json={'cookie': np_globals.CookiesQR},
+                verify=np_globals.VerifyPath,
+                headers=np_globals.Header
+            )
+        else:
+            requests.get(url, cookies = cookie, verify=np_globals.VerifyPath, headers=np_globals.Header)
         np_globals.Cookies = None
         np_globals.Np_NickName = "Unlogin - 未登录"
         np_globals.Np_Status = False
         store.persistent.np_Cookie = None
         np_globals.QRLastQueryCode = 0
         np_globals.QRData = None
+        np_globals._QRLogin = False
         Remove_Cookies()
         #renpy.jump("np_emptylabel")
 
@@ -575,7 +637,10 @@ init python in np_util:
         id = str(id)
         cookie = np_globals.Cookies
         url = np_globals.Mainurl + np_globals.MusicDownloadurl + id
-        music = requests.get(url, cookies = cookie, verify=np_globals.VerifyPath, headers=np_globals.Header)
+        if np_globals._QRLogin:
+            music = requests.post(url, json={'cookie': np_globals.CookiesQR}, verify=np_globals.VerifyPath, headers=np_globals.Header)
+        else:
+            music = requests.get(url, cookies = cookie, verify=np_globals.VerifyPath, headers=np_globals.Header)
         try:
             getdata = music.json()
         except Exception:
@@ -585,7 +650,10 @@ init python in np_util:
         np_globals.Music_Type = getdata['data']['type']
         if file_url is None:
             return False
-        _music_download = requests.get(file_url,cookies = cookie, verify=np_globals.VerifyPath, stream=True, headers=np_globals.Header)
+        if np_globals._QRLogin:
+            _music_download = requests.post(file_url, json={'cookie': np_globals.CookiesQR}, verify=np_globals.VerifyPath, stream=True, headers=np_globals.Header)
+        else:
+            _music_download = requests.get(file_url,cookies = cookie, verify=np_globals.VerifyPath, stream=True, headers=np_globals.Header)
         _flac = open(np_globals.Catch + "/" + id + "." + np_globals.Music_Type, 'wb')
         for chunk in _music_download.iter_content(chunk_size = np_globals.CatchSize):
             if chunk:
@@ -598,7 +666,10 @@ init python in np_util:
         id = str(id)
         cookie = np_globals.Cookies
         url = np_globals.Mainurl + np_globals.MusicDownloadurl2 + id
-        music = requests.get(url, cookies = cookie, verify=np_globals.VerifyPath, headers=np_globals.Header)
+        if np_globals._QRLogin:
+            music = requests.post(url, json={'cookie': np_globals.CookiesQR}, verify=np_globals.VerifyPath, headers=np_globals.Header)
+        else:
+            music = requests.get(url, cookies = cookie, verify=np_globals.VerifyPath, headers=np_globals.Header)
         try:
             getdata = music.json()
         except Exception:
@@ -608,7 +679,7 @@ init python in np_util:
         np_globals.Music_Type = getdata['data'][0]['type']
         if file_url == None:
             return False
-        _music_download = requests.get(file_url,cookies = cookie, verify=np_globals.VerifyPath, stream=True, headers=np_globals.Header)
+            _music_download = requests.get(file_url, , verify=np_globals.VerifyPath, stream=True, headers=np_globals.Header)
         _flac = open(np_globals.Catch + "/" + id + "." + np_globals.Music_Type, 'wb')
         for chunk in _music_download.iter_content(chunk_size = np_globals.CatchSize):
             if chunk:

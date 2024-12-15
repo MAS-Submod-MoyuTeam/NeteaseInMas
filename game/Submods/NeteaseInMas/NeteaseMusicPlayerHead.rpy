@@ -232,6 +232,7 @@ screen np_qrlogin():
                 import os
                 os.remove(np_globals.QRImageDir + np_globals.QRFileName)
                 np_globals.QRData = None
+                np_globals.QRLastQueryCode = 0
             except Exception as e:
                 pass
 
