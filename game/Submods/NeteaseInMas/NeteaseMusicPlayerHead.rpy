@@ -214,11 +214,12 @@ screen np_qrlogin():
                     renpy.notify("发送失败：发送太频繁，请等待{}s后重试".format(60 - (time.time() - np_globals.GetCaptchaTime)))
                     return False
             np_globals.QRData = np_util.Music_Get_QRBase64()
-            np_util.Save_Image(np_globals.QRData[1], np_globals.QRImagePath)
+            np_globals.QRFileName = np_util.randompngname()
+            np_util.Save_Image(np_globals.QRData[1], np_globals.QRImageDir + np_globals.QRFileName)
             np_globals.GetCaptchaTime = time.time()
         
         def _np_check_code():
-            if not os.path.exists(np_globals.QRImagePath) or np_globals.QRData == None:
+            if not os.path.exists(np_globals.QRImageDir + np_globals.QRFileName) or np_globals.QRData == None:
                 return 
             elif np_globals.QRLastQueryCode == 803:
                 np_force_refresh()
@@ -229,7 +230,7 @@ screen np_qrlogin():
         def del_qrimage():
             try:
                 import os
-                os.remove(np_globals.QRImagePath)
+                os.remove(np_globals.QRImageDir + np_globals.QRFileName)
                 np_globals.QRData = None
             except Exception as e:
                 pass
@@ -253,13 +254,13 @@ screen np_qrlogin():
             timer 2.0 repeat (np_globals.QRLastQueryCode != 803) action Function(_np_check_code, _update_screens=True)
 
             hbox:
-                if os.path.exists(np_globals.QRImagePath) and np_globals.QRData != None:
+                if os.path.exists(np_globals.QRImageDir + np_globals.QRFileName) and np_globals.QRData != None:
                     imagebutton:
-                        insensitive "Submods/NeteaseInMas/QR.png"
-                        idle "Submods/NeteaseInMas/QR.png"
-                        hover "Submods/NeteaseInMas/QR.png"
-                        selected_idle "Submods/NeteaseInMas/QR.png"
-                        selected_hover "Submods/NeteaseInMas/QR.png"
+                        insensitive np_globals.QRImageDirforScreen + np_globals.QRFileName
+                        idle np_globals.QRImageDirforScreen + np_globals.QRFileName
+                        hover np_globals.QRImageDirforScreen + np_globals.QRFileName
+                        selected_idle np_globals.QRImageDirforScreen + np_globals.QRFileName
+                        selected_hover np_globals.QRImageDirforScreen + np_globals.QRFileName
 
                 else:
                     text "等待生成二维码..."
@@ -277,6 +278,8 @@ screen np_qrlogin():
                     text "授权登录成功"
                 elif np_globals.QRLastQueryCode == 0:
                     text "请先生成二维码"
+            hbox:
+                text "{size=-10}很难扫？很难扫就对了, 我也很难扫, 网易云不会做扫码我来做"
             if config.debug:
                 hbox:
                     text "QRLastQueryCode" + str(np_globals.QRLastQueryCode)
@@ -284,6 +287,8 @@ screen np_qrlogin():
                     text str(whattime())
                 hbox:
                     text str(np_globals.QRData)[:75]
+                hbox:
+                    text str(np_globals._QRCookie).replace("[", "")[:75]
 
             hbox:
                 textbutton "关闭":
@@ -292,7 +297,7 @@ screen np_qrlogin():
                         Hide("np_qrlogin")
                         ]
                 
-                if not os.path.exists(np_globals.QRImagePath):
+                if not os.path.exists(np_globals.QRImageDir + np_globals.QRFileName):
                     textbutton "生成二维码":
                         action Function(_np_qrlogin_genimg, _update_screens=True)
                 else:

@@ -29,7 +29,9 @@ init -5 python in np_globals:
     CookiesPath = Basedir + "/game/Submods/NeteaseInMas/Cookies/cookies.json"
     QRImageDir = Basedir + "/game/Submods/NeteaseInMas/"
     QRImagePath = Basedir + "/game/Submods/NeteaseInMas/QR.png"
+    QRImageDirforScreen = "Submods/NeteaseInMas/"
 
+    QRFileName = "QR.png"
     ######################## API
     
     Mainurl = None#"http://neteaseapi.0721play.icu"
@@ -180,7 +182,10 @@ init python in np_util:
     from store.mas_submod_utils import submod_log
 
     requests = requests.Session()
-    
+
+    def randompngname():
+        return str(int(time.time()))+'.png'
+
     def Save_Cookies(cookies):
         """
         保存Cookies
