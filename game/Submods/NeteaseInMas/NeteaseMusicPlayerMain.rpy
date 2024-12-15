@@ -225,6 +225,7 @@ init python in np_util:
             with open(np_globals.CookiesPath, 'r') as cookie:
                 cookiesDict = json.load(cookie)
             np_globals.CookiesQR = cookiesDict
+            np_globals._QRLogin = True
         except Exception as e:
             np_globals.CookiesQR = None
             submod_log.error("加载Cookies发生错误：{}".format(e))
@@ -650,10 +651,12 @@ init python in np_util:
         np_globals.Music_Type = getdata['data']['type']
         if file_url is None:
             return False
-        if np_globals._QRLogin:
-            _music_download = requests.post(file_url, json={'cookie': np_globals.CookiesQR}, verify=np_globals.VerifyPath, stream=True, headers=np_globals.Header)
         else:
-            _music_download = requests.get(file_url,cookies = cookie, verify=np_globals.VerifyPath, stream=True, headers=np_globals.Header)
+            store.mas_submod_utils.submod_log.debug("Music_Download: {}".format(file_url))
+        #if np_globals._QRLogin:
+        #    _music_download = requests.post(file_url, json={'cookie': np_globals.CookiesQR}, verify=np_globals.VerifyPath, stream=True, headers=np_globals.Header)
+        #else:
+        _music_download = requests.get(file_url, verify=np_globals.VerifyPath, stream=True, headers=np_globals.Header)
         _flac = open(np_globals.Catch + "/" + id + "." + np_globals.Music_Type, 'wb')
         for chunk in _music_download.iter_content(chunk_size = np_globals.CatchSize):
             if chunk:
@@ -679,7 +682,12 @@ init python in np_util:
         np_globals.Music_Type = getdata['data'][0]['type']
         if file_url == None:
             return False
-            _music_download = requests.get(file_url, , verify=np_globals.VerifyPath, stream=True, headers=np_globals.Header)
+        else:
+            store.mas_submod_utils.submod_log.debug("Music_Download: {}".format(file_url))
+        #if np_globals._QRLogin:
+        #    _music_download = requests.post(file_url, json={'cookie': np_globals.CookiesQR}, verify=np_globals.VerifyPath, stream=True, headers=np_globals.Header)
+        #else:
+        _music_download = requests.get(file_url, verify=np_globals.VerifyPath, stream=True, headers=np_globals.Header)
         _flac = open(np_globals.Catch + "/" + id + "." + np_globals.Music_Type, 'wb')
         for chunk in _music_download.iter_content(chunk_size = np_globals.CatchSize):
             if chunk:
