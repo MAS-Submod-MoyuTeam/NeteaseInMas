@@ -12,6 +12,7 @@ init -100:
     default persistent._NP_search_limit = "50"
     default persistent.np_restart_song = None
     default persistent._np_force_playlist = None
+    default np_search_input_value = ""
 
 init -5 python in np_globals:
     import store
@@ -23,7 +24,7 @@ init -5 python in np_globals:
 
     Basedir = renpy.config.basedir
     Catch = Basedir + "/game/Submods/NeteaseInMas/Catch"
-    FFmpegDir =  Basedir + "/game/Submods/NeteaseInMas/ffmpeg/win32/usr/bin"
+    FFmpegDir =  Basedir + "/game/Submods/NeteaseInMas/ffmpeg"
     FFmpegexe = FFmpegDir + "/ffmpeg"
     VerifyPath = True
     CookiesPath = Basedir + "/game/Submods/NeteaseInMas/Cookies/cookies.json"
@@ -34,7 +35,7 @@ init -5 python in np_globals:
     QRFileName = "QR.png"
     ######################## API
     
-    Mainurl = None#"http://neteaseapi.0721play.icu"
+    Mainurl = None#"https://neteaseapi.0721play.icu"
 
     ### API get
     Version = "/inner/version"
@@ -63,8 +64,10 @@ init -5 python in np_globals:
     MusicCheck = "/check/music?id="
     MusicDownloadurl = "/song/download/url?id="
     MusicDownloadurl2 = "/song/url?id="
+    MusicMatchUrl = "/song/url/match?id="
     MusicDetail = "/song/detail?ids="
     UserPlaylist = "/user/playlist?uid="
+    UserCloud = "/user/cloud?limit=1000"
     PlaylistDetail = "/playlist/detail?id="
     GetQRKey = "/login/qr/key"
     QRCreate = "/login/qr/create?key="
@@ -116,6 +119,11 @@ init -5 python in np_globals:
     CookiesQR = ""
     _QRCookie = None # 临时
     Header={'Connection':'close'}
+    AudioHeader = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': 'https://music.163.com/',
+        'Connection': 'close',
+    }
     # 上次获取验证码时间
     GetCaptchaTime=0
     QRData = None
@@ -127,6 +135,12 @@ init -5 python in np_globals:
     # Music menu菜单
     menu_open = False
     curr_page = 0
+    # 两种列表的独立缓存
+    playlist_cache = []      # 我喜欢的音乐
+    cloud_cache = []         # 云盘音乐
+    current_list_type = ""   # 当前显示类型
+    menu_title = "音乐"       # 音乐菜单左上角标题
+    search_filter = ""
 
     #UI位置
     SCR_MENU_AREA = (835, 40, 440, 528)
@@ -138,7 +152,7 @@ init 5 python in np_globals:
     def change_api(api):
         global Mainurl
         if api == "":
-            Mainurl = "http://neteaseapi.0721play.icu"
+            Mainurl = "https://neteaseapi.0721play.icu"
         elif api[-1] == "/":
             Mainurl = api[:-1]
         else:
@@ -147,11 +161,11 @@ init 5 python in np_globals:
             if store.np_util.Check_API_Available():
                 return True, Mainurl
             else:
-                Mainurl = "http://neteaseapi.0721play.icu"
+                Mainurl = "https://neteaseapi.0721play.icu"
                 store.np_util.Check_API_Available()
                 return False, "粘贴的API链接错误！将使用默认值！查看submod_log获取详细信息"
         except Exception as e:
-            Mainurl = "http://neteaseapi.0721play.icu"
+            Mainurl = "https://neteaseapi.0721play.icu"
             store.mas_submod_utils.submod_log.error(e)
             return False, "粘贴的API链接错误！将使用默认值！查看submod_log获取详细信息"
         #return True, Mainurl
@@ -163,7 +177,7 @@ init 5 python in np_globals:
     if store.mas_getAPIKey("netease_apiurl") != "":
         Mainurl = store.mas_getAPIKey("netease_apiurl")
     else:
-        Mainurl = "http://neteaseapi.0721play.icu"
+        Mainurl = "https://neteaseapi.0721play.icu"
 
 init python in np_util:
     import json
@@ -284,25 +298,112 @@ init python in np_util:
         else:
             getmusiclist = requests.get(url2, cookies = cookie , verify = np_globals.VerifyPath, headers=np_globals.Header)
         mlist = getmusiclist.json()
-        for song in mlist['playlist']["tracks"]:
-            id = str(song["id"])
-            name = song["name"]
-            artist = song["ar"][0]["name"]
+        for song in mlist.get('playlist', {}).get("tracks", []):
+            id = str(song.get("id", ""))
+
+            # 空值保护
+            name = song.get("name") or "未知歌曲"
+
+            ar_list = song.get("ar") or []
+            if ar_list and ar_list[0].get("name"):
+                artist = ar_list[0]["name"]
+            else:
+                artist = "未知歌手"
+
             try:
-                alias = str(song["alia"][0])
+                alias = str(song["alia"][0]) if song.get("alia") else ""
             except:
                 alias = ""
+
             if alias == "":
                 showname = name + " - " + artist
             else:
                 showname = name + " - " + alias + " - " + artist
-            showname = showname.replace('[','')
-            showname = showname.replace(']','')
-            showname = showname.replace('{','')
-            showname = showname.replace('}','')
+
+            showname = showname.replace('[','').replace(']','').replace('{','').replace('}','')
             msclist.append([id, name, artist, alias, showname])
 
-        np_globals.Play_List = msclist
+        np_globals.playlist_cache = list(msclist)
+        np_globals.Play_List = list(msclist)
+        np_globals.current_list_type = "playlist"
+        np_globals.menu_title = "我喜欢的音乐"
+
+    def Get_User_Cloud():
+        """
+        获取用户云盘的所有歌曲（分页拉取）
+        """
+        cookie = np_globals.Cookies
+        msclist = list()
+
+        offset = 0
+        limit = 100          # 每页拉取数量
+        max_pages = 50       # 最多拉取 50 页，防止死循环
+        page = 0
+
+        while page < max_pages:
+            url = np_globals.Mainurl + "/user/cloud?limit={}&offset={}".format(limit, offset)
+            #submod_log.info("[NP-DEBUG] 拉取云盘 offset={} limit={}".format(offset, limit))
+
+            if np_globals._QRLogin:
+                cloudr = requests.post(url, json={'cookie': np_globals.CookiesQR}, verify=np_globals.VerifyPath, headers=np_globals.Header)
+            else:
+                cloudr = requests.get(url, cookies=cookie, verify=np_globals.VerifyPath, headers=np_globals.Header)
+
+            try:
+                cloudj = cloudr.json()
+            except Exception as e:
+                submod_log.error("[NP-DEBUG] 云盘返回非 JSON: {}".format(e))
+                break
+
+            data_list = cloudj.get("data", [])
+            if isinstance(data_list, dict):
+                data_list = data_list.get("songs", [])
+
+            if not data_list:
+                #submod_log.info("[NP-DEBUG] 云盘第 {} 页返回空，结束".format(page))
+                break
+
+            for song in data_list:
+                simple = song.get("simpleSong")
+                if simple:
+                    sid = str(simple.get("id", ""))
+                    name = simple.get("name") or "未知歌曲"
+                    ar = simple.get("ar") or []
+                    artist = ar[0]["name"] if ar and ar[0].get("name") else "未知歌手"
+                else:
+                    sid = str(song.get("songId") or song.get("id") or "")
+                    name = song.get("songName") or song.get("name") or "未知歌曲"
+                    artist = song.get("artist") or "未知歌手"
+
+                if not sid:
+                    continue
+
+                alias = ""
+                showname = name + " - " + artist
+                showname = showname.replace('[','').replace(']','').replace('{','').replace('}','')
+                msclist.append([sid, name, artist, alias, showname])
+
+            #submod_log.info("[NP-DEBUG] 云盘第 {} 页获取 {} 首，累计 {} 首".format(page, len(data_list), len(msclist)))
+
+            # 判断是否还有下一页
+            has_more = cloudj.get("hasMore", False)
+            if not has_more:
+                #submod_log.info("[NP-DEBUG] hasMore=False，结束分页")
+                break
+
+            # 返回数量少于 limit 也认为结束
+            if len(data_list) < limit:
+                #submod_log.info("[NP-DEBUG] 返回数量少于 limit，结束分页")
+                break
+
+            offset += limit
+            page += 1
+
+        np_globals.cloud_cache = list(msclist)
+        np_globals.Play_List = list(msclist)
+        np_globals.current_list_type = "cloud"
+        np_globals.menu_title = "云盘音乐"
+        #submod_log.info("[NP-DEBUG] 云盘歌曲最终总数 = {}".format(len(msclist)))
 
 
     def Catch_size(path = np_globals.Catch):
@@ -340,6 +441,12 @@ init python in np_util:
             id = str(song["id"])
             name = song["name"]
             artist = song["artists"][0]["name"]
+            # 灰色歌曲标记
+            fee = song.get("fee", 0)
+            privilege = song.get("privilege", {}) or {}
+            st = privilege.get("st", 0) or 0
+            if fee in (1, 4) or st < 0:
+                name = "[灰] " + name
             try:
                 alias = song["alias"][0]
             except:
@@ -354,6 +461,95 @@ init python in np_util:
             showname = showname.replace('}','')
             res.append([id, name, artist, alias, showname])
         np_globals.Search_List = res
+        return res
+
+    def Music_Search_Artist(keyword):
+        """
+        搜索歌手，返回歌手列表
+        return: [[artist_id, artist_name], ...]
+        """
+        res = list()
+        kw = urllib2.quote(keyword.encode('utf-8'))
+        url = np_globals.Mainurl + "/search?keywords=" + kw + "&type=100&limit=30"
+        try:
+            r = requests.get(url, verify=np_globals.VerifyPath,
+                             headers=np_globals.Header, timeout=15)
+            j = r.json()
+            for a in (j.get("result", {}) or {}).get("artists", []) or []:
+                res.append([str(a.get("id", "")), a.get("name") or "未知歌手"])
+        except Exception as e:
+            submod_log.error("Music_Search_Artist 异常：{}".format(e))
+        return res
+
+
+    def Music_Get_Artist_All_Songs(artist_id):
+        """
+        拉取某歌手的全部歌曲（含灰歌），不设上限，直到 API 返回空
+        return: [[id, name, artist, alias, showname], ...]
+        """
+        res = list()
+        offset = 0
+        limit = 100
+        page = 0
+
+        while True:
+            url = "{}/artist/songs?id={}&limit={}&offset={}&order=hot".format(
+                np_globals.Mainurl, str(artist_id), limit, offset
+            )
+            try:
+                r = requests.get(url, verify=np_globals.VerifyPath,
+                                 headers=np_globals.Header, timeout=30)
+                j = r.json()
+            except Exception as e:
+                submod_log.error("Music_Get_Artist_All_Songs 异常：{}".format(e))
+                break
+
+            songs = j.get("songs", []) or []
+            if not songs:
+                break
+
+            for song in songs:
+                sid = str(song.get("id", ""))
+                if not sid:
+                    continue
+                name = song.get("name") or "未知歌曲"
+
+                ar_list = song.get("ar") or song.get("artists") or []
+                if ar_list and ar_list[0].get("name"):
+                    artist = "/".join([x.get("name", "") for x in ar_list if x.get("name")]) or "未知歌手"
+                else:
+                    artist = "未知歌手"
+
+                # 灰色标记（和 Music_Search 保持一致）
+                fee = song.get("fee", 0)
+                privilege = song.get("privilege", {}) or {}
+                st = privilege.get("st", 0) or 0
+                if fee in (1, 4) or st < 0:
+                    name = "[灰] " + name
+
+                try:
+                    alias = str(song["alia"][0]) if song.get("alia") else ""
+                except:
+                    alias = ""
+
+                if alias == "":
+                    showname = name + " - " + artist
+                else:
+                    showname = name + " - " + alias + " - " + artist
+                showname = (showname.replace('[','').replace(']','')
+                                     .replace('{','').replace('}',''))
+
+                res.append([sid, name, artist, alias, showname])
+
+            # 返回数量少于 limit 说明到底了
+            if len(songs) < limit:
+                break
+
+            offset += limit
+            page += 1
+            #submod_log.info("Music_Get_Artist_All_Songs 已拉取 {} 首...".format(len(res)))
+
+        #submod_log.info("歌手 {} 共拉取 {} 首歌曲".format(artist_id, len(res)))
         return res
 
     def Music_GetDetail(id = np_globals.Music_Id):
@@ -493,6 +689,7 @@ init python in np_util:
             if res:
                 np_globals.CookiesQR = checkjson['cookie']
                 Save_Cookies(np_globals.CookiesQR)
+                store.persistent._np_force_playlist = None   # 扫码登录成功后清除强制歌单
             return status
         else:
             return status
@@ -632,67 +829,309 @@ init python in np_util:
         Remove_Cookies()
         #renpy.jump("np_emptylabel")
 
+    def _Get_Download_Header(url):
+        """
+        根据下载链接的域名，返回合适的请求头（防盗链）。
+        """
+        u = (url or "").lower()
+        ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
-    def Music_Download(id):
-        #根据ID下载flac
+        # 默认
+        referer = "https://music.163.com/"
+
+        if "kuwo.cn" in u:
+            referer = "https://www.kuwo.cn/"
+        elif "kugou.com" in u or "kglink" in u:
+            referer = "https://www.kugou.com/"
+        elif "migu" in u:
+            referer = "https://music.migu.cn/"
+        elif "bilibili" in u or "bilivideo" in u or "hdslb.com" in u:
+            referer = "https://www.bilibili.com/"
+        elif "qq.com" in u or "y.qq.com" in u or "qqmusic" in u:
+            referer = "https://y.qq.com/"
+        elif "126.net" in u:
+            referer = "https://music.163.com/"
+
+        return {
+            "User-Agent": ua,
+            "Referer": referer,
+            "Connection": "close",
+        }
+
+    def _Get_Song_Url(id):
+        """
+        获取歌曲下载 URL。
+        依次尝试，跳过试听片段：
+          1. /song/download/url
+          2. /song/url
+          3. /song/url/match （解灰，需开关开启）
+        返回 (url, size, type) 或 (None, 0, "")
+        """
         id = str(id)
         cookie = np_globals.Cookies
-        url = np_globals.Mainurl + np_globals.MusicDownloadurl + id
-        if np_globals._QRLogin:
-            music = requests.post(url, json={'cookie': np_globals.CookiesQR}, verify=np_globals.VerifyPath, headers=np_globals.Header)
-        else:
-            music = requests.get(url, cookies = cookie, verify=np_globals.VerifyPath, headers=np_globals.Header)
+        HEADERS = np_globals.Header
+        VERIFY = np_globals.VerifyPath
+        br = str(store.persistent._np_download_br)
+
+        def _is_trial(data, url):
+            """判断返回的是不是试听片段"""
+            if data and data.get("freeTrialInfo") is not None:
+                #submod_log.info("[NP-DEBUG] 试听检测：freeTrialInfo 不为空")
+                return True
+            if url:
+                u = url.lower()
+                # 网易云试听片段 URL 特征
+                if "jd-musicrep-ts" in u or "-ts/" in u or "/ts/" in u or "trial" in u:
+                    #submod_log.info("[NP-DEBUG] 试听检测：URL 含试听关键字")
+                    return True
+            if data:
+                size = data.get("size", 0)
+                if size and size < 1024 * 1024:
+                    #submod_log.info("[NP-DEBUG] 试听检测：size={} < 1MB".format(size))
+                    return True
+                t = data.get("time", 0)
+                if t and t < 60000:
+                    #submod_log.info("[NP-DEBUG] 试听检测：time={} < 60s".format(t))
+                    return True
+            return False
+
+        # ---- 1. song/download/url ----
+        url1 = np_globals.Mainurl + np_globals.MusicDownloadurl + id + "&br=" + br
         try:
-            getdata = music.json()
-        except Exception:
-            return False
-        file_url = getdata["data"]["url"]
-        np_globals.Music_Size = getdata['data']['size']
-        np_globals.Music_Type = getdata['data']['type']
-        if file_url is None:
-            return False
+            if np_globals._QRLogin:
+                r = requests.post(url1, json={'cookie': np_globals.CookiesQR}, verify=VERIFY, headers=HEADERS, timeout=15)
+            else:
+                r = requests.get(url1, cookies=cookie, verify=VERIFY, headers=HEADERS, timeout=15)
+            j = r.json()
+            d = j.get("data", {}) or {}
+            u = d.get("url")
+            #submod_log.info("[NP-DEBUG] song/download/url 返回：url={}, size={}, time={}, freeTrialInfo={}".format(
+            #    (u[:60] + "...") if u else None,
+            #    d.get("size"),
+            #    d.get("time"),
+            #    d.get("freeTrialInfo")
+            #))
+            if u and not _is_trial(d, u):
+                return u, d.get('size', 0), str(d.get('type', 'mp3')).lower()
+            elif u:
+                #submod_log.info("[NP-DEBUG] song/download/url 判定为试听，跳过")
+        except Exception as e:
+            #submod_log.info("[NP-DEBUG] song/download/url 异常：{}".format(e))
+
+        # ---- 2. song/url ----
+        url2 = np_globals.Mainurl + np_globals.MusicDownloadurl2 + id + "&br=" + br
+        try:
+            if np_globals._QRLogin:
+                r2 = requests.post(url2, json={'cookie': np_globals.CookiesQR}, verify=VERIFY, headers=HEADERS, timeout=15)
+            else:
+                r2 = requests.get(url2, cookies=cookie, verify=VERIFY, headers=HEADERS, timeout=15)
+            j2 = r2.json()
+            d2 = (j2.get("data") or [{}])[0]
+            u2 = d2.get("url")
+            #submod_log.info("[NP-DEBUG] song/url 返回：url={}, size={}, time={}, freeTrialInfo={}".format(
+                (u2[:60] + "...") if u2 else None,
+                d2.get("size"),
+                d2.get("time"),
+                d2.get("freeTrialInfo")
+            ))
+            if u2 and not _is_trial(d2, u2):
+                return u2, d2.get('size', 0), str(d2.get('type', 'mp3')).lower()
+            elif u2:
+                #submod_log.info("[NP-DEBUG] song/url 判定为试听，跳过")
+        except Exception as e:
+            #submod_log.info("[NP-DEBUG] song/url 异常：{}".format(e))
+
+        # ---- 3. 解灰（仅在开关开启时） ----
+        if not store.persistent._np_unblock_enable:
+            #submod_log.info("[NP-DEBUG] 解灰未开启，放弃 id={}".format(id))
+            return None, 0, ""
+
+        # 音源列表：用户指定了就用指定的，否则按顺序轮流尝试
+        if store.persistent._np_unblock_source:
+            _sources = [store.persistent._np_unblock_source]
         else:
-            store.mas_submod_utils.submod_log.debug("Music_Download: {}".format(file_url))
-        #if np_globals._QRLogin:
-        #    _music_download = requests.post(file_url, json={'cookie': np_globals.CookiesQR}, verify=np_globals.VerifyPath, stream=True, headers=np_globals.Header)
-        #else:
-        _music_download = requests.get(file_url, verify=np_globals.VerifyPath, stream=True, headers=np_globals.Header)
-        _flac = open(np_globals.Catch + "/" + id + "." + np_globals.Music_Type, 'wb')
-        for chunk in _music_download.iter_content(chunk_size = np_globals.CatchSize):
-            if chunk:
-                _flac.write(chunk)
-        _flac.close()
+            _sources = ["", "kuwo", "kugou", "qq", "migu", "bilibili"]
+
+        for _src in _sources:
+            match_url = np_globals.Mainurl + np_globals.MusicMatchUrl + id
+            if _src:
+                match_url = match_url + "&source=" + _src
+            #submod_log.info("[NP-DEBUG] 尝试解灰 id={} source='{}'".format(id, _src if _src else "auto"))
+            try:
+                if np_globals._QRLogin:
+                    mr = requests.post(match_url, json={'cookie': np_globals.CookiesQR},
+                                       verify=VERIFY, headers=HEADERS, timeout=45)
+                else:
+                    mr = requests.get(match_url, cookies=cookie,
+                                      verify=VERIFY, headers=HEADERS, timeout=45)
+                mj = mr.json()
+                #submod_log.info("[NP-DEBUG] 解灰返回：{}".format(str(mj)[:200]))
+
+                mu = None
+                data_field = mj.get("data")
+                if isinstance(data_field, dict):
+                    mu = data_field.get("url")
+                elif isinstance(data_field, list) and data_field:
+                    mu = data_field[0].get("url")
+                elif isinstance(data_field, basestring) and data_field:
+                    mu = data_field
+                elif mj.get("url"):
+                    mu = mj["url"]
+
+                if mu:
+                    lower = mu.lower()
+                    if ".flac" in lower:
+                        mtype = "flac"
+                    elif ".m4a" in lower:
+                        mtype = "m4a"
+                    elif ".mp3" in lower:
+                        mtype = "mp3"
+                    else:
+                        mtype = "mp3"
+                    #submod_log.info("[NP-DEBUG] 解灰成功(source={})，格式={}，url 前100：{}".format(
+                    #    _src if _src else "auto", mtype, mu[:100]))
+                    return mu, 0, mtype
+                else:
+                    #submod_log.info("[NP-DEBUG] source={} 未返回 url，换下一个".format(_src if _src else "auto"))
+                    pass
+            except Exception as e:
+                submod_log.error("[NP-DEBUG] source={} 解灰异常：{}".format(_src if _src else "auto", e))
+                # 超时/异常都继续试下一个源
+                continue
+
+        submod_log.info("[NP-DEBUG] 所有音源都没找到 id={}".format(id))
+        return None, 0, ""
+
+    def Music_Download(id):
+        #根据ID下载
+        id = str(id)
+        file_url, size, mtype = _Get_Song_Url(id)
+        if not file_url:
+            submod_log.error("[NP-DEBUG] Music_Download 未获取到可用 URL id={}".format(id))
+            return False
+
+        np_globals.Music_Size = size
+        np_globals.Music_Type = str(mtype).lower()
+
+        _dl_header = _Get_Download_Header(file_url)
+        #submod_log.debug("Music_Download: {}".format(file_url))
+        #submod_log.info("[NP-DEBUG] Music_Download Referer={}".format(_dl_header["Referer"]))
+
+        try:
+            _music_download = requests.get(
+                file_url,
+                verify=np_globals.VerifyPath,
+                stream=True,
+                headers=_dl_header,
+                timeout=60
+            )
+        except Exception as e:
+            submod_log.error("[NP-DEBUG] Music_Download 请求异常：{}".format(e))
+            return False
+
+        path = np_globals.Catch + "/" + id + "." + np_globals.Music_Type
+        _total = 0
+        try:
+            _flac = open(path, 'wb')
+            for chunk in _music_download.iter_content(chunk_size=np_globals.CatchSize):
+                if chunk:
+                    _flac.write(chunk)
+                    _total += len(chunk)
+            _flac.close()
+        except Exception as e:
+            submod_log.error("[NP-DEBUG] Music_Download 写入异常：{}".format(e))
+            try:
+                os.remove(path)
+            except:
+                pass
+            return False
+
+        if _total == 0:
+            submod_log.error(
+                "[NP-DEBUG] Music_Download 下载为空 id={} status={} content_type={} url={}".format(
+                    id,
+                    _music_download.status_code,
+                    _music_download.headers.get("Content-Type", "?"),
+                    file_url[:100]
+                )
+            )
+            try:
+                os.remove(path)
+            except:
+                pass
+            return False
+
+        #submod_log.info(
+        #    "[NP-DEBUG] Music_Download 成功 id={} 大小={} 字节 格式={}".format(
+        #        id, _total, np_globals.Music_Type
+        #    )
+        #)
         return True
 
     def Music_Download_2(id):
-        #根据ID下载flac - song/id
+        #根据ID下载 - song/id
         id = str(id)
-        cookie = np_globals.Cookies
-        url = np_globals.Mainurl + np_globals.MusicDownloadurl2 + id
-        if np_globals._QRLogin:
-            music = requests.post(url, json={'cookie': np_globals.CookiesQR}, verify=np_globals.VerifyPath, headers=np_globals.Header)
-        else:
-            music = requests.get(url, cookies = cookie, verify=np_globals.VerifyPath, headers=np_globals.Header)
+        file_url, size, mtype = _Get_Song_Url(id)
+        if not file_url:
+            submod_log.error("[NP-DEBUG] Music_Download_2 未获取到可用 URL id={}".format(id))
+            return False
+
+        np_globals.Music_Size = size
+        np_globals.Music_Type = str(mtype).lower()
+
+        _dl_header = _Get_Download_Header(file_url)
+        #submod_log.debug("Music_Download_2: {}".format(file_url))
+        #submod_log.info("[NP-DEBUG] Music_Download_2 Referer={}".format(_dl_header["Referer"]))
+
         try:
-            getdata = music.json()
-        except Exception:
+            _music_download = requests.get(
+                file_url,
+                verify=np_globals.VerifyPath,
+                stream=True,
+                headers=_dl_header,
+                timeout=60
+            )
+        except Exception as e:
+            submod_log.error("[NP-DEBUG] Music_Download_2 请求异常：{}".format(e))
             return False
-        file_url = getdata["data"][0]["url"]
-        np_globals.Music_Size = getdata['data'][0]['size']
-        np_globals.Music_Type = getdata['data'][0]['type']
-        if file_url == None:
+
+        path = np_globals.Catch + "/" + id + "." + np_globals.Music_Type
+        _total = 0
+        try:
+            _flac = open(path, 'wb')
+            for chunk in _music_download.iter_content(chunk_size=np_globals.CatchSize):
+                if chunk:
+                    _flac.write(chunk)
+                    _total += len(chunk)
+            _flac.close()
+        except Exception as e:
+            submod_log.error("[NP-DEBUG] Music_Download_2 写入异常：{}".format(e))
+            try:
+                os.remove(path)
+            except:
+                pass
             return False
-        else:
-            store.mas_submod_utils.submod_log.debug("Music_Download: {}".format(file_url))
-        #if np_globals._QRLogin:
-        #    _music_download = requests.post(file_url, json={'cookie': np_globals.CookiesQR}, verify=np_globals.VerifyPath, stream=True, headers=np_globals.Header)
-        #else:
-        _music_download = requests.get(file_url, verify=np_globals.VerifyPath, stream=True, headers=np_globals.Header)
-        _flac = open(np_globals.Catch + "/" + id + "." + np_globals.Music_Type, 'wb')
-        for chunk in _music_download.iter_content(chunk_size = np_globals.CatchSize):
-            if chunk:
-                _flac.write(chunk)
-        _flac.close()
+
+        if _total == 0:
+            submod_log.error(
+                "[NP-DEBUG] Music_Download_2 下载为空 id={} status={} content_type={} url={}".format(
+                    id,
+                    _music_download.status_code,
+                    _music_download.headers.get("Content-Type", "?"),
+                    file_url[:100]
+                )
+            )
+            try:
+                os.remove(path)
+            except:
+                pass
+            return False
+
+        #submod_log.info(
+            "[NP-DEBUG] Music_Download_2 成功 id={} 大小={} 字节 格式={}".format(
+                id, _total, np_globals.Music_Type
+            )
+        )
         return True
 
     def Music_Deleteflac():
@@ -752,6 +1191,8 @@ init python in np_util:
                 (Use to play the same song again without it being restarted)
                 (Default: False)
         """
+        if song is None:
+            song = Music_GetCatchSaveList()     # 每次调用都重新扫描缓存目录
         if song is None or song == []:
             renpy.music.stop(channel="music", fadeout=fadeout)
         else:
@@ -770,6 +1211,29 @@ init python in np_util:
         np_globals.Music_Author = ""
         np_globals.Music_Id = ""
         store.persistent.np_restart_song = None
+
+    def Music_Play_Random(fadein=1.2, loop=True, fadeout=1.2, if_changed=False):
+        """
+        随机播放已缓存的音乐列表
+        IN:
+            fadein - 过度渐入时间 (Default: 1.2)
+            loop - 是否循环播放 (Default: True)
+            fadeout - 过度渐出时间 (Default: 1.2)
+            if_changed - 仅在歌曲改变时才切换 (Default: False)
+        """
+        import random
+        Music_Deleteflac()
+        songs_list = Music_GetCatchSaveList()
+        if songs_list:
+            random.shuffle(songs_list)
+        Music_Play_List(
+            song=songs_list,
+            fadein=fadein,
+            loop=loop,
+            set_per=False,
+            fadeout=fadeout,
+            if_changed=if_changed
+        )
 
     def Music_Play(song, fadein=1.2, loop=True, set_per=True, fadeout=1.2, if_changed=False):
         song = str(song)
@@ -908,16 +1372,24 @@ init 950 python:
         if store.persistent.current_track is not None:
             store.persistent.np_restart_song = None
             store.persistent.np_restart_song_type = None
-        
-        # 如果设置了播放缓存
+
+        # 优先：随机播放缓存
+        if store.persistent.np_start_randomplay:
+            try:
+                store.np_util.Music_Play_Random(fadein=1.2, loop=True, fadeout=1.2, if_changed=False)
+            except Exception as e:
+                store.mas_submod_utils.submod_log.error("随机播放缓存失败：{}".format(e))
+            return
+
+        # 其次：循环播放缓存
         if store.persistent.np_start_loopplay:
             try:
                 store.np_util.Music_Play_List(song=store.np_util.Music_GetCatchSaveList(), fadein=1.2, loop=True, set_per=False, fadeout=1.2, if_changed=False)
             except Exception as e:
                 store.mas_submod_utils.submod_log.error("播放缓存失败：{}".format(e))
             return
-        
-        # 只当np_restart_song不为空且current_track为空时启动播放
+
+        # 最后：上次单曲
         if store.persistent.np_restart_song is not None and store.persistent.current_track is None:
             np_globals.Music_Type = store.persistent.np_restart_song_type
             try:

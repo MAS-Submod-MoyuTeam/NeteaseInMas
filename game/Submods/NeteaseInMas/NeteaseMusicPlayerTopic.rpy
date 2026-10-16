@@ -5,7 +5,10 @@ default persistent._np_max_retry = 9
 define NP_CONMODE_MP3 = 1
 define NP_CONMODE_WAV = 2
 default persistent.np_start_loopplay = False
+default persistent.np_start_randomplay = False
 default persistent._np_downtimeout = 100
+default persistent._np_unblock_enable = False
+default persistent._np_unblock_source = ""
 init 5 python:
     addEvent(
             Event(
@@ -222,8 +225,10 @@ label np_show_userplaylist:
         m 3rksdra "呃...我们好像忘记登录了..."
         m 3hksdrb "去设置里登录一下吧, [player]."
         return
-    if not len(np_globals.Play_List) > 0:
-        m 1eka "呃...我还不知道你喜欢听什么呢.{w=2}{nw}"
+
+    # 已经加载过就直接用缓存，否则才异步拉取
+    if len(np_globals.playlist_cache) == 0:
+        m 1eka "让我看看你喜欢听什么...{w=2}{nw}"
         m 1dua "等我一下...{nw}"
         python:
             a = mas_threading.MASAsyncWrapper(np_util.Get_User_Playlist)
@@ -234,7 +239,18 @@ label np_show_userplaylist:
                 _history_list.pop()
                 stat = a.done()
 
+        if len(np_globals.playlist_cache) == 0:
+            m 3rksdlb "呃...你的歌单里好像没有歌呢, [player]."
+            return
         m 1eub "我知道你喜欢什么了哦, [player].{w=2}{nw}"
+
+    # 把缓存切换为当前列表
+    $ np_globals.Play_List = list(np_globals.playlist_cache)
+    $ np_globals.current_list_type = "playlist"
+    $ np_globals.menu_title = "我喜欢的音乐"
+    $ np_globals.search_filter = ""
+    $ np_globals.curr_page = 0
+
     call display_np_music_menu
     if _return == None or _return == "":
         m 3rka "None"
@@ -301,14 +317,27 @@ label np_show_setting:
             "下载时等待的最高次数，默认为100"
             $ persistent._np_downtimeout = int(mas_input("输入非数字可能会导致异常, 当前为[persistent._np_downtimeout]"))
         "启动时播放缓存":
-            "这将导致启动后不会播放上次播放的歌曲，而是自动播放已经缓存过的所有歌曲"
+            python:
+                if persistent.np_start_loopplay:
+                    _np_start_mode_display = "循环播放"
+                elif persistent.np_start_randomplay:
+                    _np_start_mode_display = "随机播放"
+                else:
+                    _np_start_mode_display = "禁用"
+            "这将导致启动后不会播放上次播放的歌曲，而是自动循环播放已经缓存过的所有歌曲"
             "如果在播放缓存期间删除缓存，可能会导致异常"
+            "可选择「循环」与「随机」"
             menu:
-                "当前：[persistent.np_start_loopplay]"
-                "启用":
+                "当前：[_np_start_mode_display]"
+                "循环播放启用":
                     $ persistent.np_start_loopplay = True
+                    $ persistent.np_start_randomplay = False
+                "随机播放启用":
+                    $ persistent.np_start_loopplay = False
+                    $ persistent.np_start_randomplay = True
                 "禁用":
                     $ persistent.np_start_loopplay = False
+                    $ persistent.np_start_randomplay = False
         "手动设置我喜欢歌单id":
             "目前仅能使用二维码正常登录, 但我太懒，不想做，而且手机端也无法进行扫码"
             "你可以在这里设置我喜欢歌单使用的id, id可以在网页端登陆后，查看链接参数即可"
@@ -356,4 +385,284 @@ label np_timed_text_events_wrapup:
 
     # 展示莫妮卡为闲置状态以防万一
     show monika idle
+    return
+
+
+init 5 python:
+    addEvent(
+            Event(
+                persistent.event_database,          
+                eventlabel="np_show_cloudmusic",        
+                category=["Netease Music"],           
+                prompt="云盘音乐",        
+                pool=True,
+                unlocked=True
+            ),
+        restartBlacklist=True
+        )
+
+    
+label np_show_cloudmusic:
+    python:  
+        try:
+            renpy.hide_screen("music_menu")
+            store.songs.menu_open = False
+        except:
+            pass
+    if not np_globals.Np_Status:
+        m 3rksdra "呃...我们好像忘记登录了..."
+        m 3hksdrb "去设置里登录一下吧, [player]."
+        return
+
+    # 已经加载过就直接用缓存，否则才异步拉取
+    if len(np_globals.cloud_cache) == 0:
+        m 1eka "让我看看你的云盘里有什么歌...{w=2}{nw}"
+        m 1dua "等我一下...{nw}"
+        python:
+            a = mas_threading.MASAsyncWrapper(np_util.Get_User_Cloud)
+            a.start()
+            stat = False
+            while not stat:
+                renpy.say(m, "等我一下{fast}.{w=0.15}.{w=0.15}.{w=0.15}{nw}")
+                _history_list.pop()
+                stat = a.done()
+
+        if len(np_globals.cloud_cache) == 0:
+            m 3rksdlb "呃...你的云盘里好像没有歌呢, [player]."
+            return
+        m 1eub "我知道你的云盘里有哪些歌了哦, [player].{w=2}{nw}"
+
+    # 把缓存切换为当前列表
+    $ np_globals.Play_List = list(np_globals.cloud_cache)
+    $ np_globals.current_list_type = "cloud"
+    $ np_globals.menu_title = "云盘音乐"
+    $ np_globals.search_filter = ""
+    $ np_globals.curr_page = 0
+
+    call display_np_music_menu
+    if _return == None or _return == "":
+        m 3rka "None"
+        return
+    if _return == -1:
+        $ renpy.hide_screen("np_music_menu")
+        $ np_globals.menu_open = False
+        return
+    if _return == -2:
+        $ play_song(None)
+        $ renpy.hide_screen("np_music_menu")
+        $ np_globals.menu_open = False
+        return
+    $ np_globals.Music_Id = _return
+    call np_play_musicid
+    return
+
+
+init 5 python:
+    addEvent(
+            Event(
+                persistent.event_database,          
+                eventlabel="np_search_gray",        
+                category=["Netease Music"],           
+                prompt="搜索灰色歌曲",        
+                pool=True,
+                unlocked=True
+            ),
+        restartBlacklist=True
+        )
+
+label np_search_gray:
+    $ response_quips = [
+        "想找什么灰色歌曲?",
+        "[player], 想找哪首灰色歌曲呢?",
+        "我们今天找什么灰色歌曲?"
+    ]
+    $ response_quip = renpy.substitute(renpy.random.choice(response_quips))
+    $ _Search_Word = mas_input(
+            "[response_quip]",
+            length=80,
+            screen="np_input_screen"
+        ).strip('\t\n\r')
+    if _Search_Word == "User_Canceled":
+        m 1eka "那就下次吧."
+        return
+    if _Search_Word == "":
+        m 1ekb "啊, 是空的呢...要再试一遍吗?"
+        jump np_search_gray
+    
+    m 2duc "等我去搜一下...{nw}"
+    $ store.np_util.Music_Search(_Search_Word)
+    
+    # 过滤灰色歌曲
+    python:
+        _gray_list = [s for s in np_globals.Search_List if s[1].startswith("[灰] ")]
+        np_globals.Search_List = _gray_list
+    
+    if len(np_globals.Search_List) > 0:
+        m 3eub "我找到了这些灰色歌曲, 你看看有没有你想听的."
+        call screen np_scrollable_menu(np_globals.Search_List, np_globals.SCR_MENU_AREA, np_globals.SCR_MENU_XALIGN, "重新搜一首", "算了")
+        if _return == -1:
+            m 1eka "好吧."
+            m 3ekb "那我们下次再来~"
+            return
+        elif _return == 0:
+            m 1hua "好的."
+            jump np_search_gray
+        else:
+            m 1hua "好~{w=1}{nw}"
+            if not np_globals.Np_Status and persistent._np_playmode == NP_DOWNMODE2:
+                m 3rksdra "呃...我们好像忘记登录了..."
+                m 3hksdrb "去设置里登录一下吧, [player]."
+                return
+            $ np_globals.Music_Id = _return
+            call np_play_musicid
+    else:
+        m 1eud "呃...[player]"
+        m 3rub "我没有找到灰色歌曲, 要不换个关键词?"
+        jump np_search_gray
+    return
+
+init 5 python:
+    addEvent(
+            Event(
+                persistent.event_database,          
+                eventlabel="np_random",        
+                category=["Netease Music"],           
+                prompt="随机播放缓存",        
+                pool=True,
+                unlocked=True
+            ),
+        restartBlacklist=True
+        )
+
+label np_random:
+    $ hide_extra_screen()
+    $ np_util.Music_Play_Random()
+    m "ok"
+    return
+
+
+init 5 python:
+    addEvent(
+            Event(
+                persistent.event_database,          
+                eventlabel="np_search_by_artist",        
+                category=["Netease Music"],           
+                prompt="按歌手搜歌",        
+                pool=True,
+                unlocked=True
+            ),
+        restartBlacklist=True
+        )
+
+label np_search_by_artist:
+    # ---------- 第 1 步：搜歌手 ----------
+    $ _artist_kw = mas_input(
+            "先告诉我歌手名字吧",
+            length=80,
+            screen="np_input_screen"
+        ).strip('\t\n\r')
+    if _artist_kw == "User_Canceled":
+        m 1eka "那就下次吧."
+        return
+    if _artist_kw == "":
+        m 1ekb "空的呢...再试一次吧."
+        jump np_search_by_artist
+
+    python:
+        _a = mas_threading.MASAsyncWrapper(np_util.Music_Search_Artist, [_artist_kw])
+        _a.start()
+        stat = False
+        while not stat:
+            renpy.say(m, "等我找一下这个歌手{fast}.{w=0.15}.{w=0.15}.{w=0.15}{nw}")
+            _history_list.pop()
+            stat = _a.done()
+        _artists = _a.get()
+
+    if _artists is None:
+        $ _artists = []
+    if len(_artists) == 0:
+        m 3rksdlb "没找到叫 [_artist_kw] 的歌手呢..."
+        jump np_search_by_artist
+
+    # ---------- 第 2 步：选歌手 ----------
+    if len(_artists) == 1:
+        $ _artist_id = _artists[0][0]
+        $ _artist_name = _artists[0][1]
+        m 1eub "是 [_artist_name] 对吧？{w=0.5}{nw}"
+    else:
+        python:
+            _artist_menu = [[a[0], a[1], "", "", a[1]] for a in _artists]
+        m 3eub "我找到这些歌手，你选一个吧."
+        call screen np_scrollable_menu(_artist_menu, np_globals.SCR_MENU_AREA, np_globals.SCR_MENU_XALIGN, "重新搜", "算了")
+        if _return == -1:
+            m 1eka "好吧."
+            return
+        elif _return == 0:
+            jump np_search_by_artist
+        else:
+            $ _artist_id = _return
+            python:
+                for _a in _artists:
+                    if _a[0] == _artist_id:
+                        _artist_name = _a[1]
+                        break
+
+    # ---------- 第 3 步：拉这位歌手的全部歌曲（异步） ----------
+    python:
+        _a = mas_threading.MASAsyncWrapper(np_util.Music_Get_Artist_All_Songs, [_artist_id])
+        _a.start()
+        stat = False
+        while not stat:
+            renpy.say(m, "正在拉取 [_artist_name] 的全部歌曲{fast}.{w=0.15}.{w=0.15}.{w=0.15}{nw}")
+            _history_list.pop()
+            stat = _a.done()
+        _all_songs = _a.get()
+
+    if _all_songs is None:
+        $ _all_songs = []
+    if len(_all_songs) == 0:
+        m 3rksdlb "这位歌手在网易云里好像一首歌都没有呢..."
+        return
+
+    m 1eub "[_artist_name] 共有 [len(_all_songs)] 首歌曲哦."
+
+# ---------- 第 4 步：输入歌名关键词，循环过滤 ----------
+label np_search_by_artist_filter:
+    $ _song_kw = mas_input(
+            "想听 [_artist_name] 的哪首歌？",
+            length=80,
+            screen="np_input_screen"
+        ).strip('\t\n\r')
+    if _song_kw == "User_Canceled":
+        m 1eka "那就下次吧."
+        return
+
+    python:
+        if _song_kw == "":
+            _filtered = list(_all_songs)
+        else:
+            _kw_low = _song_kw.lower()
+            _filtered = [s for s in _all_songs if _kw_low in s[4].lower()]
+        np_globals.Search_List = list(_filtered)
+
+    if len(_filtered) == 0:
+        m 3rksdlb "这位歌手里没有歌名包含 [_song_kw] 的歌呢..."
+        jump np_search_by_artist_filter
+
+    m 3eub "我找到了这些, 你看看有没有想听的."
+    call screen np_scrollable_menu(np_globals.Search_List, np_globals.SCR_MENU_AREA, np_globals.SCR_MENU_XALIGN, "重新搜歌名", "算了")
+    if _return == -1:
+        m 1eka "好吧."
+        m 3ekb "那我们下次再来~"
+        return
+    elif _return == 0:
+        jump np_search_by_artist_filter
+    else:
+        m 1hua "好~{w=1}{nw}"
+        if not np_globals.Np_Status and persistent._np_playmode == NP_DOWNMODE2:
+            m 3rksdra "呃...我们好像忘记登录了..."
+            m 3hksdrb "去设置里登录一下吧, [player]."
+            return
+        $ np_globals.Music_Id = _return
+        call np_play_musicid
     return
