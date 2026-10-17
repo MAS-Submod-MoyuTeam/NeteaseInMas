@@ -172,6 +172,7 @@ label np_play_musicid:
                         break
                     renpy.say(m, "第[retry]次重试...{w=0.5}{nw}")
                 else:
+                    time.sleep(0.5)
                     np_globals.Music_Type = "mp3"
                     np_util.Music_Play(np_globals.Music_Id)
                     break

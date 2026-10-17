@@ -598,25 +598,39 @@ init python in np_util:
         in_path = "{}/{}.{}".format(outdir, id, in_type)
         out_path = "{}/{}.mp3".format(outdir, id)
         
-        # 修改 ffmpeg_exe 的路径
-        if renpy.android:
-            
-             from jnius import autoclass
-             activity = autoclass("org.renpy.android.PythonSDLActivity").mActivity
-             ffmpeg_exe = os.path.join(activity.getApplicationInfo().nativeLibraryDir, "libmas_ffmpeg.so")
-        else:
-            ffmpeg_exe = np_globals.FFmpegexe  # PC 端路径
-    
-        if not os.path.exists(ffmpeg_exe):
-            submod_log.error("[NP-DEBUG] 找不到 ffmpeg: {}".format(ffmpeg_exe))
-            return False
-            
-        # 核心转码命令：使用 libmp3lame 编码为 320kbps MP3
-        cmd = [ffmpeg_exe, "-i", in_path, "-c:a", "libmp3lame", "-b:a", "320k", out_path, "-y"]
-        
+        # 根据平台获取 ffmpeg 路径并执行
         try:
-            #submod_log.info("[NP-DEBUG] 开始转码: {}".format(" ".join(cmd)))
-            a = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if renpy.android:
+                from jnius import autoclass
+                activity = autoclass("org.renpy.android.PythonSDLActivity").mActivity
+                ffmpeg_exe = os.path.join(activity.getApplicationInfo().nativeLibraryDir, "libmas_ffmpeg.so")
+                
+                if not os.path.exists(ffmpeg_exe):
+                    submod_log.error("[NP-DEBUG] 找不到 ffmpeg: {}".format(ffmpeg_exe))
+                    return False
+                    
+                # 安卓端用列表形式，不弹黑框（安卓本来也没黑框）
+                cmd = [ffmpeg_exe, "-i", in_path, "-c:a", "libmp3lame", "-b:a", "320k", out_path, "-y"]
+                a = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                
+            else:
+                # PC 端使用你习惯的字符串拼接
+                ffmpeg_exe = np_globals.FFmpegexe
+                if not os.path.exists(ffmpeg_exe):
+                    submod_log.error("[NP-DEBUG] 找不到 ffmpeg: {}".format(ffmpeg_exe))
+                    return False
+                    
+                # 使用引号防止路径中有空格
+                cmd = "\"{}\" -i \"{}\" -c:a libmp3lame -b:a 320k \"{}\" -y".format(ffmpeg_exe, in_path, out_path)
+                
+                # Windows 隐藏黑框的经典写法
+                st = subprocess.STARTUPINFO()
+                st.dwFlags = subprocess.STARTF_USESHOWWINDOW
+                st.wShowWindow = subprocess.SW_HIDE
+                
+                # 加上 PIPE 捕获输出
+                a = subprocess.Popen(cmd, startupinfo=st, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            
             stdout, stderr = a.communicate()
             
             if a.returncode == 0 and os.path.exists(out_path) and os.path.getsize(out_path) > 0:
@@ -627,6 +641,7 @@ init python in np_util:
                 err_msg = stderr.decode('utf-8', errors='ignore')
                 submod_log.error("[NP-DEBUG] 转码失败: {}".format(err_msg))
                 return False
+                
         except Exception as e:
             submod_log.error("[NP-DEBUG] 执行异常: {}".format(e))
             return False
@@ -961,9 +976,10 @@ init python in np_util:
             if u2 and not _is_trial(d2, u2):
                 return u2, d2.get('size', 0), str(d2.get('type', 'mp3')).lower()
             elif u2:
-                submod_log.info("[NP-DEBUG] song/url 判定为试听，跳过")
+                #submod_log.info("[NP-DEBUG] song/url 判定为试听，跳过")
+                pass
         except Exception as e:
-            submod_log.info("[NP-DEBUG] song/url 异常：{}".format(e))
+            submod_log.error("[NP-DEBUG] song/url 异常：{}".format(e))
 
         # ---- 2. song/download/url ----
         url1 = np_globals.Mainurl + np_globals.MusicDownloadurl + id + "&br=" + br
@@ -985,9 +1001,10 @@ init python in np_util:
                 return u, d.get('size', 0), str(d.get('type', 'mp3')).lower()
             elif u:
                 #submod_log.info("[NP-DEBUG] song/download/url 判定为试听，跳过")
+                pass
         except Exception as e:
             #submod_log.info("[NP-DEBUG] song/download/url 异常：{}".format(e))
-              pass
+            submod_log.error("[NP-DEBUG] song/download/url 异常：{}".format(e))
 
 
         # ---- 3. 解灰（仅在开关开启时） ----
@@ -1048,7 +1065,7 @@ init python in np_util:
                 # 超时/异常都继续试下一个源
                 continue
 
-        submod_log.info("[NP-DEBUG] 所有音源都没找到 id={}".format(id))
+        submod_log.error("[NP-DEBUG] 所有音源都没找到 id={}".format(id))
         return None, 0, ""
 
     def _Download_Music_Core(id, debug_tag):
@@ -1106,6 +1123,7 @@ init python in np_util:
         """
         清理无法播放的flac文件（仅当对应的 mp3 或 wav 文件成功生成时才清理）
         """ 
+        import time
         dirs = os.listdir(np_globals.Catch)
         for file_name in dirs:
             if file_name.endswith('.flac') or file_name.endswith('.m4a'):
@@ -1115,10 +1133,14 @@ init python in np_util:
                 # 如果成功生成了 mp3，就删掉原文件
                 if os.path.exists(mp3_path) and os.path.getsize(mp3_path) > 0:
                     file = np_globals.Catch + "/" + file_name
-                    try:
-                        os.remove(file)
-                    except Exception as e:
-                        submod_log.error("清除源文件失败: {}".format(e))
+                    
+                    # 针对 Windows 文件占用做 3 次重试
+                    for _ in range(3):
+                        try:
+                            os.remove(file)
+                            break # 成功删掉就跳出循环
+                        except Exception as e:
+                            time.sleep(0.2) # 等 0.2 秒再试
                     
     def Music_DeleteCatch():
         """
@@ -1335,7 +1357,7 @@ init 999 python:
                 persistent._NP_API_key_able = False
         except Exception as e:
             persistent._NP_API_key_able = False
-            store.mas_submod_utils.submod_log.info("初始化连接时发生异常：{}".format(e))
+            store.mas_submod_utils.submod_log.error("初始化连接时发生异常：{}".format(e))
 
 init -900 python:
     # 创建缓存和cookies文件夹
