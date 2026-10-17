@@ -35,7 +35,7 @@ init -5 python in np_globals:
     QRFileName = "QR.png"
     ######################## API
     
-    Mainurl = None#"https://neteaseapi.0721play.icu"
+    Mainurl = "https://neteaseapi.0721play.icu"
 
     ### API get
     Version = "/inner/version"
@@ -192,7 +192,17 @@ init python in np_util:
     import threading
     import os, sys
     import store.songs as songs
-    import urllib2
+    #import urllib2
+    # 兼容 Python 2 / Python 3
+    try:
+        # Python 3 (Ren'Py 8)
+        from urllib.parse import quote
+        from urllib.request import urlopen, Request
+        from urllib.error import HTTPError
+    except ImportError:
+        # Python 2 (Ren'Py 7)
+        from urllib import quote
+        from urllib2 import urlopen, Request, HTTPError
     import time
     from store.mas_submod_utils import submod_log
 
@@ -433,7 +443,7 @@ init python in np_util:
         返回 结果list
         """
         res = list()
-        keyword = urllib2.quote(keyword.encode('utf-8'))
+        keyword = quote(keyword.encode('utf-8'))
         url = np_globals.Mainurl + np_globals.Search + keyword + np_globals.SearchToLimit
         search = requests.get(url, verify = np_globals.VerifyPath, headers=np_globals.Header)
         result = search.json()
@@ -469,7 +479,7 @@ init python in np_util:
         return: [[artist_id, artist_name], ...]
         """
         res = list()
-        kw = urllib2.quote(keyword.encode('utf-8'))
+        kw = quote(keyword.encode('utf-8'))
         url = np_globals.Mainurl + "/search?keywords=" + kw + "&type=100&limit=30"
         try:
             r = requests.get(url, verify=np_globals.VerifyPath,
@@ -570,20 +580,57 @@ init python in np_util:
             np_globals.Music_Alia = ""
     
 
-    def Music_ToWav():
+    def Music_ToMp3():
         """
-        将音频文件转码为WAV
+        将音频文件转码为MP3
         id 歌曲id
         """
-        id = np_globals.Music_Id
+        import os, subprocess
+    
+        id = str(np_globals.Music_Id)
         outdir = np_globals.Catch
-        cmd = "\"{}\" -i \"{}/{}.flac\" -ab 990k \"{}/{}.wav\" -y".format(np_globals.FFmpegexe, outdir, id, outdir, id)
-        st=subprocess.STARTUPINFO()
-        st.dwFlags=subprocess.STARTF_USESHOWWINDOW
-        st.wShowWindow=subprocess.SW_HIDE
-        a = subprocess.Popen(cmd, startupinfo=st)
-        return a.communicate()
-
+        in_type = str(np_globals.Music_Type).lower()
+        
+        # 如果已经是 mp3，无需转码
+        if in_type == 'mp3':
+            return True
+            
+        in_path = "{}/{}.{}".format(outdir, id, in_type)
+        out_path = "{}/{}.mp3".format(outdir, id)
+        
+        # 修改 ffmpeg_exe 的路径
+        if renpy.android:
+            
+             from jnius import autoclass
+             activity = autoclass("org.renpy.android.PythonSDLActivity").mActivity
+             ffmpeg_exe = os.path.join(activity.getApplicationInfo().nativeLibraryDir, "libmas_ffmpeg.so")
+        else:
+            ffmpeg_exe = np_globals.FFmpegexe  # PC 端路径
+    
+        if not os.path.exists(ffmpeg_exe):
+            submod_log.error("[NP-DEBUG] 找不到 ffmpeg: {}".format(ffmpeg_exe))
+            return False
+            
+        # 核心转码命令：使用 libmp3lame 编码为 320kbps MP3
+        cmd = [ffmpeg_exe, "-i", in_path, "-c:a", "libmp3lame", "-b:a", "320k", out_path, "-y"]
+        
+        try:
+            #submod_log.info("[NP-DEBUG] 开始转码: {}".format(" ".join(cmd)))
+            a = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdout, stderr = a.communicate()
+            
+            if a.returncode == 0 and os.path.exists(out_path) and os.path.getsize(out_path) > 0:
+                #submod_log.info("[NP-DEBUG] 转码 MP3 成功")
+                np_globals.Music_Type = "mp3"
+                return True
+            else:
+                err_msg = stderr.decode('utf-8', errors='ignore')
+                submod_log.error("[NP-DEBUG] 转码失败: {}".format(err_msg))
+                return False
+        except Exception as e:
+            submod_log.error("[NP-DEBUG] 执行异常: {}".format(e))
+            return False
+    
 
     def Get_OutIp():
         np_globals.Outip=requests.get('http://ifconfig.me/ip', headers=np_globals.Header).text.strip()
@@ -894,8 +941,31 @@ init python in np_util:
                     #submod_log.info("[NP-DEBUG] 试听检测：time={} < 60s".format(t))
                     return True
             return False
+            
+        # ---- 1. song/url ----
+        url2 = np_globals.Mainurl + np_globals.MusicDownloadurl2 + id + "&br=" + br
+        try:
+            if np_globals._QRLogin:
+                r2 = requests.post(url2, json={'cookie': np_globals.CookiesQR}, verify=VERIFY, headers=HEADERS, timeout=15)
+            else:
+                r2 = requests.get(url2, cookies=cookie, verify=VERIFY, headers=HEADERS, timeout=15)
+            j2 = r2.json()
+            d2 = (j2.get("data") or [{}])[0]
+            u2 = d2.get("url")
+            #submod_log.info("[NP-DEBUG] song/url 返回：url={}, size={}, time={}, freeTrialInfo={}".format(
+            #    (u2[:60] + "...") if u2 else None,
+            #    d2.get("size"),
+            #    d2.get("time"),
+            #    d2.get("freeTrialInfo")
+            #))
+            if u2 and not _is_trial(d2, u2):
+                return u2, d2.get('size', 0), str(d2.get('type', 'mp3')).lower()
+            elif u2:
+                submod_log.info("[NP-DEBUG] song/url 判定为试听，跳过")
+        except Exception as e:
+            submod_log.info("[NP-DEBUG] song/url 异常：{}".format(e))
 
-        # ---- 1. song/download/url ----
+        # ---- 2. song/download/url ----
         url1 = np_globals.Mainurl + np_globals.MusicDownloadurl + id + "&br=" + br
         try:
             if np_globals._QRLogin:
@@ -917,29 +987,8 @@ init python in np_util:
                 #submod_log.info("[NP-DEBUG] song/download/url 判定为试听，跳过")
         except Exception as e:
             #submod_log.info("[NP-DEBUG] song/download/url 异常：{}".format(e))
+              pass
 
-        # ---- 2. song/url ----
-        url2 = np_globals.Mainurl + np_globals.MusicDownloadurl2 + id + "&br=" + br
-        try:
-            if np_globals._QRLogin:
-                r2 = requests.post(url2, json={'cookie': np_globals.CookiesQR}, verify=VERIFY, headers=HEADERS, timeout=15)
-            else:
-                r2 = requests.get(url2, cookies=cookie, verify=VERIFY, headers=HEADERS, timeout=15)
-            j2 = r2.json()
-            d2 = (j2.get("data") or [{}])[0]
-            u2 = d2.get("url")
-            #submod_log.info("[NP-DEBUG] song/url 返回：url={}, size={}, time={}, freeTrialInfo={}".format(
-                (u2[:60] + "...") if u2 else None,
-                d2.get("size"),
-                d2.get("time"),
-                d2.get("freeTrialInfo")
-            ))
-            if u2 and not _is_trial(d2, u2):
-                return u2, d2.get('size', 0), str(d2.get('type', 'mp3')).lower()
-            elif u2:
-                #submod_log.info("[NP-DEBUG] song/url 判定为试听，跳过")
-        except Exception as e:
-            #submod_log.info("[NP-DEBUG] song/url 异常：{}".format(e))
 
         # ---- 3. 解灰（仅在开关开启时） ----
         if not store.persistent._np_unblock_enable:
@@ -1002,151 +1051,75 @@ init python in np_util:
         submod_log.info("[NP-DEBUG] 所有音源都没找到 id={}".format(id))
         return None, 0, ""
 
+    def _Download_Music_Core(id, debug_tag):
+        id = str(id)
+        file_url, size, mtype = _Get_Song_Url(id)
+        if not file_url:
+            submod_log.error("[NP-DEBUG] {} 未获取到可用 URL id={}".format(debug_tag, id))
+            return False
+    
+        np_globals.Music_Size = size
+        np_globals.Music_Type = str(mtype).lower().strip()
+        _dl_header = _Get_Download_Header(file_url)
+    
+        try:
+            _music_download = requests.get(
+                file_url, verify=np_globals.VerifyPath, stream=True,
+                headers=_dl_header, timeout=60
+            )
+            _music_download.raise_for_status() # 检查 HTTP 状态，防死链
+        except Exception as e:
+            submod_log.error("[NP-DEBUG] {} 请求异常：{}".format(debug_tag, e))
+            return False
+    
+        path = np_globals.Catch + "/" + id + "." + np_globals.Music_Type
+        _total = 0
+        try:
+            with open(path, 'wb') as _file: # 使用 with 防止文件被占用
+                for chunk in _music_download.iter_content(chunk_size=np_globals.CatchSize):
+                    if chunk:
+                        _file.write(chunk)
+                        _total += len(chunk)
+        except Exception as e:
+            submod_log.error("[NP-DEBUG] {} 写入异常：{}".format(debug_tag, e))
+            try: os.remove(path)
+            except: pass
+            return False
+        finally:
+            _music_download.close() # 确保关闭网络流
+    
+        if _total == 0:
+            submod_log.error("[NP-DEBUG] {} 下载为空 id={} status={}".format(debug_tag, id, _music_download.status_code))
+            try: os.remove(path)
+            except: pass
+            return False
+    
+        return True
+    
     def Music_Download(id):
-        #根据ID下载
-        id = str(id)
-        file_url, size, mtype = _Get_Song_Url(id)
-        if not file_url:
-            submod_log.error("[NP-DEBUG] Music_Download 未获取到可用 URL id={}".format(id))
-            return False
-
-        np_globals.Music_Size = size
-        np_globals.Music_Type = str(mtype).lower()
-
-        _dl_header = _Get_Download_Header(file_url)
-        #submod_log.debug("Music_Download: {}".format(file_url))
-        #submod_log.info("[NP-DEBUG] Music_Download Referer={}".format(_dl_header["Referer"]))
-
-        try:
-            _music_download = requests.get(
-                file_url,
-                verify=np_globals.VerifyPath,
-                stream=True,
-                headers=_dl_header,
-                timeout=60
-            )
-        except Exception as e:
-            submod_log.error("[NP-DEBUG] Music_Download 请求异常：{}".format(e))
-            return False
-
-        path = np_globals.Catch + "/" + id + "." + np_globals.Music_Type
-        _total = 0
-        try:
-            _flac = open(path, 'wb')
-            for chunk in _music_download.iter_content(chunk_size=np_globals.CatchSize):
-                if chunk:
-                    _flac.write(chunk)
-                    _total += len(chunk)
-            _flac.close()
-        except Exception as e:
-            submod_log.error("[NP-DEBUG] Music_Download 写入异常：{}".format(e))
-            try:
-                os.remove(path)
-            except:
-                pass
-            return False
-
-        if _total == 0:
-            submod_log.error(
-                "[NP-DEBUG] Music_Download 下载为空 id={} status={} content_type={} url={}".format(
-                    id,
-                    _music_download.status_code,
-                    _music_download.headers.get("Content-Type", "?"),
-                    file_url[:100]
-                )
-            )
-            try:
-                os.remove(path)
-            except:
-                pass
-            return False
-
-        #submod_log.info(
-        #    "[NP-DEBUG] Music_Download 成功 id={} 大小={} 字节 格式={}".format(
-        #        id, _total, np_globals.Music_Type
-        #    )
-        #)
-        return True
-
+        return _Download_Music_Core(id, "Music_Download")
+    
     def Music_Download_2(id):
-        #根据ID下载 - song/id
-        id = str(id)
-        file_url, size, mtype = _Get_Song_Url(id)
-        if not file_url:
-            submod_log.error("[NP-DEBUG] Music_Download_2 未获取到可用 URL id={}".format(id))
-            return False
-
-        np_globals.Music_Size = size
-        np_globals.Music_Type = str(mtype).lower()
-
-        _dl_header = _Get_Download_Header(file_url)
-        #submod_log.debug("Music_Download_2: {}".format(file_url))
-        #submod_log.info("[NP-DEBUG] Music_Download_2 Referer={}".format(_dl_header["Referer"]))
-
-        try:
-            _music_download = requests.get(
-                file_url,
-                verify=np_globals.VerifyPath,
-                stream=True,
-                headers=_dl_header,
-                timeout=60
-            )
-        except Exception as e:
-            submod_log.error("[NP-DEBUG] Music_Download_2 请求异常：{}".format(e))
-            return False
-
-        path = np_globals.Catch + "/" + id + "." + np_globals.Music_Type
-        _total = 0
-        try:
-            _flac = open(path, 'wb')
-            for chunk in _music_download.iter_content(chunk_size=np_globals.CatchSize):
-                if chunk:
-                    _flac.write(chunk)
-                    _total += len(chunk)
-            _flac.close()
-        except Exception as e:
-            submod_log.error("[NP-DEBUG] Music_Download_2 写入异常：{}".format(e))
-            try:
-                os.remove(path)
-            except:
-                pass
-            return False
-
-        if _total == 0:
-            submod_log.error(
-                "[NP-DEBUG] Music_Download_2 下载为空 id={} status={} content_type={} url={}".format(
-                    id,
-                    _music_download.status_code,
-                    _music_download.headers.get("Content-Type", "?"),
-                    file_url[:100]
-                )
-            )
-            try:
-                os.remove(path)
-            except:
-                pass
-            return False
-
-        #submod_log.info(
-            "[NP-DEBUG] Music_Download_2 成功 id={} 大小={} 字节 格式={}".format(
-                id, _total, np_globals.Music_Type
-            )
-        )
-        return True
-
+        return _Download_Music_Core(id, "Music_Download_2")
+        
     def Music_Deleteflac():
         """
-        删除无法播放的flac文件
+        清理无法播放的flac文件（仅当对应的 mp3 或 wav 文件成功生成时才清理）
         """ 
         dirs = os.listdir(np_globals.Catch)
         for file_name in dirs:
-            if file_name.find('flac') != -1:
-                file = np_globals.Catch + "/" + file_name
-                try:
-                    os.remove(file)
-                except Exception as e:
-                    submod_log.error("清除flac: {}".format(e))
-                    continue
+            if file_name.endswith('.flac') or file_name.endswith('.m4a'):
+                base_name = os.path.splitext(file_name)[0]
+                mp3_path = np_globals.Catch + "/" + base_name + ".mp3"
+                
+                # 如果成功生成了 mp3，就删掉原文件
+                if os.path.exists(mp3_path) and os.path.getsize(mp3_path) > 0:
+                    file = np_globals.Catch + "/" + file_name
+                    try:
+                        os.remove(file)
+                    except Exception as e:
+                        submod_log.error("清除源文件失败: {}".format(e))
+                    
     def Music_DeleteCatch():
         """
         清理缓存文件夹，如果失败就跳过
@@ -1164,13 +1137,27 @@ init python in np_util:
     def Music_GetCatchSaveList():
         """
         列出缓存文件列表
+        Android追加路径
         """
+        import os
+        
+        if renpy.android:
+            Netease_dir = "/storage/emulated/0/MAS/game/Submods/NeteaseInMas/Catch/"
+            #external_dir = "/storage/emulated/0/Download/netease/cloudmusic/Music/"
+    
+            if os.path.isdir(Netease_dir):
+                # 追加到 Ren'Py 的搜索路径
+                renpy.config.searchpath.append(Netease_dir)
+
         dirs = os.listdir(np_globals.Catch)
         catched = []
         for file_name in dirs:
             for types in ["mp3", "wav"]:
                 if file_name.find(types) != -1:
-                    catched.append((np_globals.Catch + "/" +file_name).replace("\\","/"))
+                    if not renpy.android:
+                        catched.append((np_globals.Catch + "/" +file_name).replace("\\","/"))
+                    else:
+                        catched.append(file_name)
         return catched
     
     def Music_Play_List(song=Music_GetCatchSaveList(), fadein=1.2, loop=True, set_per=False, fadeout=1.2, if_changed=False):
@@ -1285,6 +1272,11 @@ init python in np_util:
 
 init python in np_screen_util:
     import store
+    import sys
+
+    if sys.version_info[0] >= 3:
+        basestring = str
+        unicode = str
 
     class NpInputValue(store.InputValue):
         """

@@ -95,7 +95,7 @@ label np_play_musicid:
         call np_timed_text_events_prep
         m 1dsc "等我下好这首歌...{nw}"
         python:
-            conv = mas_threading.MASAsyncWrapper(np_util.Music_ToWav)
+            conv = mas_threading.MASAsyncWrapper(np_util.Music_ToMp3)
             import os
             if os.path.exists(np_globals.Catch + "/" + np_globals.Music_Id + ".mp3") or os.path.exists(np_globals.Catch + "/" + np_globals.Music_Id + ".wav"):
                 # 本地存在缓存
@@ -124,11 +124,14 @@ label np_play_musicid:
                         stat=None
                         break
                     if t > 20:
-                        renpy.say(m, "([downsize]MB/S)([t]/[persistent._np_downtimeout])等我下好这首歌{fast}.{w=0.25}.{w=0.25}.{w=0.25}{nw}")
+                        np_wait_text = "(" + str(downsize) + "MB/S)(" + str(t) + "/" + str(persistent._np_downtimeout) + ")等我下好这首歌{fast}.{w=0.25}.{w=0.25}.{w=0.25}{nw}"
+                        renpy.say(m, np_wait_text)
                     elif t > 1:
-                        renpy.say(m, "([downsize]MB/S)等我下好这首歌{fast}.{w=0.25}.{w=0.25}.{w=0.25}{nw}")
+                        np_wait_text = "(" + str(downsize) + "MB/S)等我下好这首歌{fast}.{w=0.25}.{w=0.25}.{w=0.25}{nw}"
+                        renpy.say(m, np_wait_text)
                     else:
-                        renpy.say(m, "等我下好这首歌{fast}.{w=0.25}.{w=0.25}.{w=0.25}{nw}")
+                        np_wait_text = "等我下好这首歌{fast}.{w=0.25}.{w=0.25}.{w=0.25}{nw}"
+                        renpy.say(m, np_wait_text)
                     _history_list.pop()
                     stat = res.get()
                     catchsize1 = catchsize2
@@ -169,6 +172,7 @@ label np_play_musicid:
                         break
                     renpy.say(m, "第[retry]次重试...{w=0.5}{nw}")
                 else:
+                    np_globals.Music_Type = "mp3"
                     np_util.Music_Play(np_globals.Music_Id)
                     break
         if FAILED:
@@ -291,21 +295,21 @@ label np_show_setting:
 
     menu:
         "请选择设置项"
-        "下载模式":
-            "下载模式有两个选项"
-            "接口song/id和song/download/id"
-            "song/id可以在非登录状态使用，而song/download/id必须登录使用"
-            "song/id主要用于试听歌曲"
-            "song/download/id用于客户端下载歌曲"
-            "使用 /song/url 接口获取的是歌曲试听 url, 但存在部分歌曲在非 VIP 账号上可以下载无损音质而不能试听无损音质, 使用song/download/id可使非 VIP 账号获取这些歌曲的无损音频"
-            "一般两个下载接口没有下载速度区别，而且下载时会下载能获取到的最高音质（一首flac格式占用50MB左右，而mp3约为10MB）"
-            "两者都无法播放无版权音乐和需要黑胶VIP的音乐"
-            menu:
-                "请选择下载模式, 当前为[mode]"
-                "song/id":
-                    $ persistent._np_playmode = NP_DOWNMODE1
-                "song/download/id":
-                    $ persistent._np_playmode = NP_DOWNMODE2
+        #"下载模式":
+        #    "下载模式有两个选项"
+        #    "接口song/id和song/download/id"
+        #    "song/id可以在非登录状态使用，而song/download/id必须登录使用"
+        #    "song/id主要用于试听歌曲"
+        #    "song/download/id用于客户端下载歌曲"
+        #    "使用 /song/url 接口获取的是歌曲试听 url, 但存在部分歌曲在非 VIP 账号上可以下载无损音质而不能试听无损音质, 使用song/download/id可使非 VIP 账号获取这些歌曲的无损音频"
+        #    "一般两个下载接口没有下载速度区别，而且下载时会下载能获取到的最高音质（一首flac格式占用50MB左右，而mp3约为10MB）"
+        #    "两者都无法播放无版权音乐和需要黑胶VIP的音乐"
+        #    menu:
+        #        "请选择下载模式, 当前为[mode]"
+        #        "song/id":
+        #            $ persistent._np_playmode = NP_DOWNMODE1
+        #        "song/download/id":
+        #            $ persistent._np_playmode = NP_DOWNMODE2
         "搜索结果数":
             "决定了搜索歌曲返回的结果数量"
             $ persistent._NP_search_limit = str(mas_input("输入非数字可能会导致异常, 当前为[persistent._NP_search_limit]"))
@@ -623,8 +627,9 @@ label np_search_by_artist:
     if len(_all_songs) == 0:
         m 3rksdlb "这位歌手在网易云里好像一首歌都没有呢..."
         return
-
-    m 1eub "[_artist_name] 共有 [len(_all_songs)] 首歌曲哦."
+    
+    $ _song_count = len(_all_songs)
+    m 1eub "[_artist_name] 共有 [_song_count] 首歌曲哦."
 
 # ---------- 第 4 步：输入歌名关键词，循环过滤 ----------
 label np_search_by_artist_filter:

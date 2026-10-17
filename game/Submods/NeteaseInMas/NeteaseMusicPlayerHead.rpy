@@ -290,14 +290,31 @@ screen np_qrlogin():
             timer 2.0 repeat (np_globals.QRLastQueryCode != 803) action Function(_np_check_code, _update_screens=True)
 
             hbox:
-                if os.path.exists(np_globals.QRImageDir + np_globals.QRFileName) and np_globals.QRData != None:
-                    imagebutton:
-                        insensitive np_globals.QRImageDirforScreen + np_globals.QRFileName
-                        idle np_globals.QRImageDirforScreen + np_globals.QRFileName
-                        hover np_globals.QRImageDirforScreen + np_globals.QRFileName
-                        selected_idle np_globals.QRImageDirforScreen + np_globals.QRFileName
-                        selected_hover np_globals.QRImageDirforScreen + np_globals.QRFileName
-
+                if np_globals.QRData != None:
+                    python:
+                        import base64
+                        qr_img = None
+                        try:
+                            # 提取 base64 数据部分（去掉前缀）
+                            b64_str = np_globals.QRData[1]
+                            if ',' in b64_str:
+                                b64_str = b64_str.split(',')[1]
+                            # 解码为二进制数据
+                            img_data = base64.b64decode(b64_str)
+                            # 直接生成 Ren'Py 图像对象，不读磁盘文件
+                            qr_img = im.Data(img_data, np_globals.QRFileName)
+                        except Exception as e:
+                            pass
+            
+                    if qr_img is not None:
+                        imagebutton:
+                            insensitive qr_img
+                            idle qr_img
+                            hover qr_img
+                            selected_idle qr_img
+                            selected_hover qr_img
+                    else:
+                        text "等待生成二维码..."
                 else:
                     text "等待生成二维码..."
             
