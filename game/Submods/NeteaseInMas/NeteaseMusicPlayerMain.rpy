@@ -1274,7 +1274,10 @@ init python in np_util:
                 mtype = ".wav"
             else:
                 mtype = ".mp3"
-            song = (np_globals.Catch + "/" + song + mtype).replace("\\","/")
+            if renpy.android:
+                song = (song + mtype)
+            else:
+                song = (np_globals.Catch + "/" + song + mtype).replace("\\","/")
             renpy.music.play(
                 song,
                 channel="music",
