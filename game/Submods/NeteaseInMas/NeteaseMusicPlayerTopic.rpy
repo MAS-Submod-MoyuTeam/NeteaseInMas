@@ -214,6 +214,7 @@ label np_play_musicid:
                         
             if not FAILED:
                 #store.mas_submod_utils.submod_log.info("[NP-DEBUG] 准备调用 Music_Play 进行播放...")
+                np_globals.Music_Type = "mp3" # <--- 强行同步变量
                 np_util.Music_Play(np_globals.Music_Id)
                 #store.mas_submod_utils.submod_log.info("[NP-DEBUG] Music_Play 调用完毕。")
             else:

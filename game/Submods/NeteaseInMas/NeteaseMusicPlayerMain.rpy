@@ -1137,7 +1137,7 @@ init python in np_util:
                             #submod_log.info("[NP-DEBUG] 成功清理文件: {}".format(file_name))
                             break
                         except Exception as e:
-                            time.sleep(0.3)
+                            time.sleep(0.5)
                     if not success:
                         submod_log.error("[NP-DEBUG] 清理失败，可能文件被占用: {}".format(file_name))
         except Exception as e:
