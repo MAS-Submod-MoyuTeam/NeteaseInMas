@@ -1121,26 +1121,27 @@ init python in np_util:
         
     def Music_Deleteflac():
         """
-        清理无法播放的flac文件（仅当对应的 mp3 或 wav 文件成功生成时才清理）
+        清理flac文件
         """ 
         import time
-        dirs = os.listdir(np_globals.Catch)
-        for file_name in dirs:
-            if file_name.endswith('.flac') or file_name.endswith('.m4a'):
-                base_name = os.path.splitext(file_name)[0]
-                mp3_path = np_globals.Catch + "/" + base_name + ".mp3"
-                
-                # 如果成功生成了 mp3，就删掉原文件
-                if os.path.exists(mp3_path) and os.path.getsize(mp3_path) > 0:
-                    file = np_globals.Catch + "/" + file_name
-                    
-                    # 针对 Windows 文件占用做 3 次重试
-                    for _ in range(3):
+        try:
+            dirs = os.listdir(np_globals.Catch)
+            for file_name in dirs:
+                if file_name.endswith('.flac'):
+                    file_path = np_globals.Catch + "/" + file_name
+                    success = False
+                    for i in range(5):
                         try:
-                            os.remove(file)
-                            break # 成功删掉就跳出循环
+                            os.remove(file_path)
+                            success = True
+                            #submod_log.info("[NP-DEBUG] 成功清理文件: {}".format(file_name))
+                            break
                         except Exception as e:
-                            time.sleep(0.2) # 等 0.2 秒再试
+                            time.sleep(0.3)
+                    if not success:
+                        submod_log.error("[NP-DEBUG] 清理失败，可能文件被占用: {}".format(file_name))
+        except Exception as e:
+            submod_log.error("[NP-DEBUG] 清理 flac 出错: {}".format(e))
                     
     def Music_DeleteCatch():
         """

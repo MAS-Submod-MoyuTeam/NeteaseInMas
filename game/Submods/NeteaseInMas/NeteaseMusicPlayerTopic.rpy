@@ -91,21 +91,36 @@ label np_menu_display:
 label np_play_musicid:
     python:
         catched = False
+        #store.mas_submod_utils.submod_log.info("========== [NP-DEBUG] 开始处理歌曲 ID: {} ==========".format(np_globals.Music_Id))
+
     if np_globals.Np_Status or persistent._np_playmode == NP_DOWNMODE1: 
         call np_timed_text_events_prep
         m 1dsc "等我下好这首歌...{nw}"
         python:
             conv = mas_threading.MASAsyncWrapper(np_util.Music_ToMp3)
             import os
-            if os.path.exists(np_globals.Catch + "/" + np_globals.Music_Id + ".mp3") or os.path.exists(np_globals.Catch + "/" + np_globals.Music_Id + ".wav"):
-                # 本地存在缓存
+            
+            mp3_cache = np_globals.Catch + "/" + np_globals.Music_Id + ".mp3"
+            wav_cache = np_globals.Catch + "/" + np_globals.Music_Id + ".wav"
+            flac_cache = np_globals.Catch + "/" + np_globals.Music_Id + ".flac"
+            
+            #store.mas_submod_utils.submod_log.info("[NP-DEBUG] 检查本地缓存: mp3存在={}, wav存在={}, flac存在={}".format(
+            #    os.path.exists(mp3_cache), os.path.exists(wav_cache), os.path.exists(flac_cache)
+            #))
+            
+            if os.path.exists(mp3_cache) or os.path.exists(wav_cache):
                 catched = True
-                # 根据缓存类型判断播放的格式
-                if os.path.exists(np_globals.Catch + "/" + np_globals.Music_Id + ".mp3"):
+                if os.path.exists(mp3_cache):
                     np_globals.Music_Type = "mp3"
                 else:
                     np_globals.Music_Type = "wav"
+                #store.mas_submod_utils.submod_log.info("[NP-DEBUG] 命中 mp3/wav 缓存，直接播放。当前格式: {}".format(np_globals.Music_Type))
+            elif os.path.exists(flac_cache):
+                np_globals.Music_Type = "flac"
+                #store.mas_submod_utils.submod_log.info("[NP-DEBUG] 命中 flac 缓存，需要走转码流程。")
+
         if not catched:
+            #$ store.mas_submod_utils.submod_log.info("[NP-DEBUG] 开始下载任务...")
             if persistent._np_playmode == NP_DOWNMODE2:
                 $ res = mas_threading.MASAsyncWrapper(np_util.Music_Download, [np_globals.Music_Id])
             else:
@@ -137,61 +152,93 @@ label np_play_musicid:
                     catchsize1 = catchsize2
                     if stat == False:
                         break
+            
+            #$ store.mas_submod_utils.submod_log.info("[NP-DEBUG] 下载结束，状态: {}".format(stat))
+            
             if stat == True:
                 m 1ksa "好了~{w=0.3}{nw}"
             elif stat == False:
+                $ store.mas_submod_utils.submod_log.error("[NP-DEBUG] 下载失败，退出。")
                 m 3rksdlb "这首歌我下不了, [player].{w=1.2}{nw}"
                 m "多半是因为网易云没有版权, 换一首或重试一下吧.{w=1.2}{nw}"
                 $ res.end()
                 call np_timed_text_events_wrapup
                 return
             else:
+                $ store.mas_submod_utils.submod_log.error("[NP-DEBUG] 下载超时，退出。")
                 m 3rksdlb "下载的时间有点久...{w=1.2}{nw}"
                 m "重试一下吧~{w=1.2}{nw}"
                 $ res.end()
                 call np_timed_text_events_wrapup
                 return
 
-            if np_globals.Music_Type != "mp3":
+        #$ store.mas_submod_utils.submod_log.info("[NP-DEBUG] 当前格式: {}".format(np_globals.Music_Type))
+        
+        if np_globals.Music_Type != "mp3":
+            if not catched:
                 $ conv.start()
                 m 1eua "等我把这首歌转码好.{w=1}.{w=1}.{w=1}{nw}"
             else:
-                $ catched = True
+                $ conv = mas_threading.MASAsyncWrapper(np_util.Music_ToMp3)
+                $ conv.start()
+                m 1eua "发现旧缓存，正在为您转换为mp3.{w=1}.{w=1}.{w=1}{nw}"
+                
         python:
-            import time, os
-            retry = 0
+            import os
             FAILED = False
-            npsong = (np_globals.Catch + "/" + np_globals.Music_Id + '.' +  np_globals.Music_Type).replace("\\","/")
-            while True:
-                if not conv.get() is None and catched == False:
-                    renpy.notify("转码时间比预计要长一些...\n最多重试[persistent._np_max_retry]次")
-                    _history_list.pop()
-                    retry = retry + 1
-                    if retry > persistent._np_max_retry:
+            
+            if np_globals.Music_Type != "mp3":
+                mp3_path = np_globals.Catch + "/" + str(np_globals.Music_Id) + ".mp3"
+                wait_time = 0
+                
+                #$ store.mas_submod_utils.submod_log.info("[NP-DEBUG] 开始监控 mp3 文件生成: {}".format(mp3_path))
+                
+                # 核心修复：必须等文件存在 且 大小大于 10KB，才算真正转码完成
+                while not (os.path.exists(mp3_path) and os.path.getsize(mp3_path) > 10240):
+                    renpy.pause(0.5, hard=True)
+                    wait_time += 0.5
+                    
+                    if int(wait_time) % 5 == 0 and wait_time % 1 == 0:
+                        #store.mas_submod_utils.submod_log.info("[NP-DEBUG] 等待转码中... 已等待 {} 秒".format(int(wait_time)))
+                        pass
+                        
+                    if wait_time > 60:
+                        store.mas_submod_utils.submod_log.error("[NP-DEBUG] 等待转码超时 (60秒)！文件未生成。")
                         FAILED = True
                         break
-                    renpy.say(m, "第[retry]次重试...{w=0.5}{nw}")
-                else:
-                    time.sleep(0.5)
-                    np_globals.Music_Type = "mp3"
-                    np_util.Music_Play(np_globals.Music_Id)
-                    break
+                
+                if not FAILED:
+                    # 多等一小会儿，确保 FFmpeg 完全释放文件句柄，防止播放时被锁
+                    renpy.pause(1.0, hard=True)
+                    #store.mas_submod_utils.submod_log.info("[NP-DEBUG] 确认文件生成且大小有效。")
+                        
+            if not FAILED:
+                #store.mas_submod_utils.submod_log.info("[NP-DEBUG] 准备调用 Music_Play 进行播放...")
+                np_util.Music_Play(np_globals.Music_Id)
+                #store.mas_submod_utils.submod_log.info("[NP-DEBUG] Music_Play 调用完毕。")
+            else:
+                store.mas_submod_utils.submod_log.error("[NP-DEBUG] 转码失败或超时，无法播放。")
+                
         if FAILED:
             call np_timed_text_events_wrapup
             m 3rksdlb "出了点问题...我没法播放这首歌..."
             m "再试一遍如何, [player]?"
             show monika idle
             return
+            
+        #$ store.mas_submod_utils.submod_log.info("[NP-DEBUG] 获取歌曲详细信息...")
         python:
             try:
                 np_util.Music_GetDetail()
             except:
-                # 重试一遍
                 try:
                     np_util.Music_GetDetail()
                 except Exception as e:
                     store.mas_submod_utils.submod_log.error("查询歌曲信息失败：{}".format(e))
+                    
+        #$ store.mas_submod_utils.submod_log.info("[NP-DEBUG] 执行 flac 清理逻辑...")
         $ np_util.Music_Deleteflac()
+            
         m 3hub "搞定~{w=3}{nw}"
         call np_timed_text_events_wrapup
         python:
