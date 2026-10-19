@@ -209,13 +209,13 @@ init python in np_util:
     #Android追加路径
     import os
         
-        if renpy.android:
-            Netease_dir = "/storage/emulated/0/MAS/game/Submods/NeteaseInMas/Catch/"
-            #external_dir = "/storage/emulated/0/Download/netease/cloudmusic/Music/"
-    
-            if os.path.isdir(Netease_dir) and Netease_dir not in renpy.config.searchpath:
-                #追加到renpy的路径
-                renpy.config.searchpath.append(Netease_dir)
+    if renpy.android:
+        Netease_dir = "/storage/emulated/0/MAS/game/Submods/NeteaseInMas/Catch/"
+        #external_dir = "/storage/emulated/0/Download/netease/cloudmusic/Music/"
+
+        if os.path.isdir(Netease_dir) and Netease_dir not in renpy.config.searchpath:
+            #追加到renpy的路径
+            renpy.config.searchpath.append(Netease_dir)
 
     def randompngname():
         return str(int(time.time()))+'.png'
