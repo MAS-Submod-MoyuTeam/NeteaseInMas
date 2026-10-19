@@ -205,6 +205,17 @@ init python in np_util:
         from urllib2 import urlopen, Request, HTTPError
     import time
     from store.mas_submod_utils import submod_log
+     
+    #Android追加路径
+    import os
+        
+        if renpy.android:
+            Netease_dir = "/storage/emulated/0/MAS/game/Submods/NeteaseInMas/Catch/"
+            #external_dir = "/storage/emulated/0/Download/netease/cloudmusic/Music/"
+    
+            if os.path.isdir(Netease_dir) and Netease_dir not in renpy.config.searchpath:
+                #追加到renpy的路径
+                renpy.config.searchpath.append(Netease_dir)
 
     def randompngname():
         return str(int(time.time()))+'.png'
@@ -614,7 +625,7 @@ init python in np_util:
                 a = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 
             else:
-                # PC 端使用你习惯的字符串拼接
+                # PC 端使用字符串拼接
                 ffmpeg_exe = np_globals.FFmpegexe
                 if not os.path.exists(ffmpeg_exe):
                     submod_log.error("[NP-DEBUG] 找不到 ffmpeg: {}".format(ffmpeg_exe))
@@ -1162,15 +1173,15 @@ init python in np_util:
         列出缓存文件列表
         Android追加路径
         """
-        import os
+        # import os
         
-        if renpy.android:
-            Netease_dir = "/storage/emulated/0/MAS/game/Submods/NeteaseInMas/Catch/"
-            #external_dir = "/storage/emulated/0/Download/netease/cloudmusic/Music/"
+        # if renpy.android:
+        #     Netease_dir = "/storage/emulated/0/MAS/game/Submods/NeteaseInMas/Catch/"
+        #     #external_dir = "/storage/emulated/0/Download/netease/cloudmusic/Music/"
     
-            if os.path.isdir(Netease_dir):
-                # 追加到 Ren'Py 的搜索路径
-                renpy.config.searchpath.append(Netease_dir)
+        #     if os.path.isdir(Netease_dir) and Netease_dir not in renpy.config.searchpath:
+        #         #追加到renpy的路径
+        #         renpy.config.searchpath.append(Netease_dir)
 
         dirs = os.listdir(np_globals.Catch)
         catched = []

@@ -318,7 +318,7 @@ screen np_qrlogin():
                             else:
                                 text "等待生成二维码..."
                     else:
-                        # PC端：保留你原来能用的相对路径代码
+                        # PC端：保留原来能用的相对路径代码
                         imagebutton:
                             insensitive np_globals.QRImageDirforScreen + np_globals.QRFileName
                             idle np_globals.QRImageDirforScreen + np_globals.QRFileName

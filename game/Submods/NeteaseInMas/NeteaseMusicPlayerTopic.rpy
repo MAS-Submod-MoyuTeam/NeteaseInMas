@@ -181,7 +181,7 @@ label np_play_musicid:
             else:
                 $ conv = mas_threading.MASAsyncWrapper(np_util.Music_ToMp3)
                 $ conv.start()
-                m 1eua "发现旧缓存，正在为您转换为mp3.{w=1}.{w=1}.{w=1}{nw}"
+                m 1eua "发现旧缓存，正在转换为mp3.{w=1}.{w=1}.{w=1}{nw}"
                 
         python:
             import os
@@ -392,7 +392,7 @@ label np_show_setting:
                     $ persistent.np_start_loopplay = False
                     $ persistent.np_start_randomplay = False
         "手动设置我喜欢歌单id":
-            "目前仅能使用二维码正常登录, 但我太懒，不想做，而且手机端也无法进行扫码"
+            #"目前仅能使用二维码正常登录, 但我太懒，不想做，而且手机端也无法进行扫码"
             "你可以在这里设置我喜欢歌单使用的id, id可以在网页端登陆后，查看链接参数即可"
             "如 https://music.163.com/#/my/m/music/playlist?id=5478048074 其中5478048074即为歌单id"
             "未登录状态只能获取前20首歌"
