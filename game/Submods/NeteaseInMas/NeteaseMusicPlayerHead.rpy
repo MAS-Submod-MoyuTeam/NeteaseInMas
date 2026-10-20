@@ -84,6 +84,27 @@ init -5 python:
         np_util.Get_OutIp()
         renpy.show_screen("np_message", message = "ok")
 
+    def np_force_refresh_playlist():
+        np_globals.playlist_cache = []
+        renpy.show_screen("np_message", message = "已清空歌单缓存，下次进入会重新加载")
+
+    def np_force_refresh_cloud():
+        np_globals.cloud_cache = []
+        renpy.show_screen("np_message", message = "已清空云盘缓存，下次进入会重新加载")
+
+    def np_toggle_unblock():
+        persistent._np_unblock_enable = not persistent._np_unblock_enable
+        if persistent._np_unblock_enable:
+            renpy.show_screen("np_message", message = "已开启解灰\n灰色歌曲会尝试从其他平台获取音源")
+        else:
+            renpy.show_screen("np_message", message = "已关闭解灰")
+
+    def np_randomplay():
+        hide_extra_screen()
+        renpy.call('np_random')
+        renpy.jump('mas_extra_menu_close_p2')
+        
+
     np_buttontip_login = "登录网易云音乐"
     np_buttontip_forcerefresh = "强制检测登录状态"
     np_buttontip_logout = "登出网易云音乐"
@@ -140,10 +161,14 @@ screen np_setting_pane():
                 action Show("np_logout")
                 hovered SetField(np_screen_tt, "value", np_buttontip_logout)
                 unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
-            textbutton "> 获取'我喜欢的音乐'":
-                hovered SetField(np_screen_tt, "value", np_buttontip_playermusiclist)
-                unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
-                action Function(np_get_ml)
+            textbutton "> 刷新我喜欢的音乐":
+                action Function(np_force_refresh_playlist)
+            textbutton "> 刷新云盘音乐":
+                action Function(np_force_refresh_cloud)
+            # textbutton "> 获取'我喜欢的音乐'":
+            #     hovered SetField(np_screen_tt, "value", np_buttontip_playermusiclist)
+            #     unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
+            #     action Function(np_get_ml)
             #textbutton "> 手动保存Cookies":
             #    action Function(np_save_cookies)
             #textbutton "> 手动刷新Cookies":
@@ -151,6 +176,16 @@ screen np_setting_pane():
             #    unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
             #    action Function(np_refresh_cookies)
         
+        if persistent._np_unblock_enable:
+            textbutton "> 灰色歌曲解灰：已开启":
+                action Function(np_toggle_unblock)
+            python:
+                _src_display = persistent._np_unblock_source if persistent._np_unblock_source else "自动"
+            textbutton "> 解灰音源：[_src_display]":
+                action Show("np_unblock_source_menu")
+        else:
+            textbutton "> 灰色歌曲解灰：已关闭":
+                action Function(np_toggle_unblock)
         textbutton "> 安全性问题说明":
             action Show("np_message", message = warn_message)
 
@@ -256,13 +291,40 @@ screen np_qrlogin():
 
             hbox:
                 if os.path.exists(np_globals.QRImageDir + np_globals.QRFileName) and np_globals.QRData != None:
-                    imagebutton:
-                        insensitive np_globals.QRImageDirforScreen + np_globals.QRFileName
-                        idle np_globals.QRImageDirforScreen + np_globals.QRFileName
-                        hover np_globals.QRImageDirforScreen + np_globals.QRFileName
-                        selected_idle np_globals.QRImageDirforScreen + np_globals.QRFileName
-                        selected_hover np_globals.QRImageDirforScreen + np_globals.QRFileName
-
+                    if renpy.android:
+                            # 安卓端：使用绝对路径的 im.Image 强行读取真实文件
+                            python:
+                                import base64
+                                qr_img = None
+                                try:
+                                    # 提取 base64 数据部分（去掉前缀）
+                                    b64_str = np_globals.QRData[1]
+                                    if ',' in b64_str:
+                                        b64_str = b64_str.split(',')[1]
+                                    # 解码为二进制数据
+                                    img_data = base64.b64decode(b64_str)
+                                    # 直接生成 Ren'Py 图像对象，不读磁盘文件
+                                    qr_img = im.Data(img_data, np_globals.QRFileName)
+                                except Exception as e:
+                                    pass
+                    
+                            if qr_img is not None:
+                                imagebutton:
+                                    insensitive qr_img
+                                    idle qr_img
+                                    hover qr_img
+                                    selected_idle qr_img
+                                    selected_hover qr_img
+                            else:
+                                text "等待生成二维码..."
+                    else:
+                        # PC端：保留原来能用的相对路径代码
+                        imagebutton:
+                            insensitive np_globals.QRImageDirforScreen + np_globals.QRFileName
+                            idle np_globals.QRImageDirforScreen + np_globals.QRFileName
+                            hover np_globals.QRImageDirforScreen + np_globals.QRFileName
+                            selected_idle np_globals.QRImageDirforScreen + np_globals.QRFileName
+                            selected_hover np_globals.QRImageDirforScreen + np_globals.QRFileName
                 else:
                     text "等待生成二维码..."
             
@@ -461,7 +523,7 @@ screen np_input_screen(prompt):
 #   page_num - current page number
 #   more_pages - true if there are more pages left
 #
-screen np_music_menu(music_list, page_num=0, more_pages=False):
+screen np_music_menu(music_list, page_num=0, more_pages=False, search_text="", search_active=False):
     modal True
 
     $ import store.songs as songs
@@ -533,7 +595,23 @@ screen np_music_menu(music_list, page_num=0, more_pages=False):
             style "music_menu_return_button"
             action Return(-1)
 
-    label "我喜欢的音乐"
+    vbox:
+        xpos 200
+        ypos 650
+        spacing 8
+        if search_active:
+            text "搜索: [search_text]" size 18
+            xoffset 20
+            yoffset -30
+            textbutton _("清除搜索"):
+                action Return("__CLEAR_SEARCH__")
+                # xoffset 20
+                # yoffset -30
+        else:
+            textbutton _("搜索当前列表"):
+                action Return("__SEARCH__")
+
+    label "[np_globals.menu_title]"
 
 # sets locks and calls hte appropriate screen
 label display_np_music_menu:
@@ -544,7 +622,7 @@ label display_np_music_menu:
         songs.menu_open = False
         np_globals.menu_open = True
         song_selected = False
-        curr_page = np_globals.curr_page
+        curr_page = 0
         try:
             renpy.hide_screen("music_menu")
         except:
@@ -552,32 +630,131 @@ label display_np_music_menu:
 
     # loop until we've selected a song
     while not song_selected:
-        $ subpllist = np_globals.Play_List[curr_page*10 :curr_page*10 + 10]
-        # setup pages
-        if subpllist is None:
-            # this should never happen. Immediately quit with None
-            return songs.NO_SONG
-
-        # otherwise, continue formatting args
+        # 本地过滤，不发网络请求
         python:
-            max_page = len(np_globals.Play_List) // 10
-            if curr_page + 1 > max_page:
-                more_pages = False
+            if np_globals.search_filter:
+                _sl = np_globals.search_filter.lower()
+                display_list = [s for s in np_globals.Play_List if _sl in s[4].lower()]
             else:
-                more_pages = True
+                display_list = list(np_globals.Play_List)
 
-        call screen np_music_menu(subpllist, page_num=curr_page, more_pages=more_pages)
+            # 搜索无结果的处理
+            _empty_search = (len(display_list) == 0 and np_globals.search_filter)
+            if _empty_search:
+                np_globals.search_filter = ""
+                display_list = list(np_globals.Play_List)
 
-        python:
-            str1 = str("sdw12dwa")
-            if _return == -1 or _return == -2:
-                song_selected = True
-            elif not type(_return) == type(str1):
-                song_selected = False
-                curr_page = _return
+            # 列表为空，直接退出
+            _list_empty = (len(display_list) == 0)
+
+        if _empty_search:
+            m 1eka "没有找到匹配的歌曲呢..."
+        elif _list_empty:
+            m 1eka "列表里没有歌呢..."
+            $ song_selected = True
+
+        if not _list_empty:
+            python:
+                max_page = (len(display_list) - 1) // 10
+                if curr_page > max_page:
+                    curr_page = 0
+                subpllist = display_list[curr_page*10 : curr_page*10 + 10]
+                more_pages = curr_page < max_page
+
+            call screen np_music_menu(subpllist, page_num=curr_page, more_pages=more_pages, search_text=np_globals.search_filter, search_active=bool(np_globals.search_filter))
+
+            if _return == "__SEARCH__":
+                $ _sw = renpy.call_screen("np_music_search_input")
+                if _sw:
+                    $ np_globals.search_filter = _sw
+                    $ curr_page = 0
+            elif _return == "__CLEAR_SEARCH__":
+                $ np_globals.search_filter = ""
+                $ curr_page = 0
+            elif _return == -1 or _return == -2:
+                $ song_selected = True
+            elif not isinstance(_return, str):
+                $ curr_page = _return
             else:
-                song_selected = True
-                
+                $ song_selected = True
+
     $ np_globals.menu_open = False
+    $ np_globals.search_filter = ""
     return _return
 
+#当前列表搜索输入
+screen np_music_search_input():
+    modal True
+    zorder 250
+
+    style_prefix "confirm"
+
+
+    frame:
+        align (0.5, 0.5)
+        xsize 800
+        xfill False
+        yfill False
+
+        vbox:
+            xalign 0.5
+            spacing 20
+
+            label "搜索当前列表":
+                style "confirm_prompt"
+                xalign 0.5
+
+            input:
+                id "input"
+                value VariableInputValue("np_search_input_value")
+                length 80
+                xalign 0.5
+                xsize 600
+
+            hbox:
+                xalign 0.5
+                spacing 60
+
+                textbutton _("搜索"):
+                    action Return(np_search_input_value)
+                textbutton _("清空"):
+                    action SetVariable("np_search_input_value", "")
+                textbutton _("取消"):
+                    action Return("")
+
+# 灰色歌曲解灰音源选择
+screen np_unblock_source_menu():
+    modal True
+    zorder 225
+
+    style_prefix "confirm"
+
+    frame:
+        align (0.5, 0.5)
+        xfill False
+        yfill False
+
+        vbox:
+            spacing 5
+
+            label "选择解灰音源":
+                style "confirm_prompt"
+                xalign 0.5
+
+            textbutton "自动（推荐）":
+                action [SetField(persistent, "_np_unblock_source", ""), Hide("np_unblock_source_menu")]
+            textbutton "酷我 (kuwo)":
+                action [SetField(persistent, "_np_unblock_source", "kuwo"), Hide("np_unblock_source_menu")]
+            textbutton "酷狗 (kugou)":
+                action [SetField(persistent, "_np_unblock_source", "kugou"), Hide("np_unblock_source_menu")]
+            textbutton "咪咕 (migu)":
+                action [SetField(persistent, "_np_unblock_source", "migu"), Hide("np_unblock_source_menu")]
+            textbutton "QQ音乐 (qq)":
+                action [SetField(persistent, "_np_unblock_source", "qq"), Hide("np_unblock_source_menu")]
+            textbutton "B站 (bilibili)":
+                action [SetField(persistent, "_np_unblock_source", "bilibili"), Hide("np_unblock_source_menu")]
+            textbutton "网易云原生 (netease)":
+                action [SetField(persistent, "_np_unblock_source", "netease"), Hide("np_unblock_source_menu")]
+
+            textbutton "关闭":
+                action Hide("np_unblock_source_menu")

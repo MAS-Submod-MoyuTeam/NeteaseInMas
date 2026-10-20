@@ -34,6 +34,12 @@ init 100:
                     ysize 35
                     style "hkb_button"
                     action Function(np_loopplay)
+
+                textbutton _("随机播放缓存"):
+                    xsize 170
+                    ysize 35
+                    style "hkb_button"
+                    action Function(np_randomplay)
                     
                 textbutton _("搜索"):
                     xsize 170
@@ -82,14 +88,33 @@ init 100:
     python:
         def hide_extra_screen():
             store.mas_extramenu.menu_visible = False
-            renpy.hide_screen("mas_extramenu_area")
-            if store.mas_sprites.zoom_level != prev_zoom:
-                renpy.call("mas_extra_menu_zoom_callback")
-            # re-enable overlays
-            if store.mas_globals.in_idle_mode:
-                mas_coreToIdleShield()
-            else:
-                mas_DropShield_core()
+            try:
+                renpy.hide_screen("mas_extramenu_area")
+            except:
+                pass
+
+            # prev_zoom 只在 extra menu 打开时被定义；
+            # 如果直接调用本函数（比如从事件菜单触发），会 NameError，所以做兜底
+            try:
+                if store.mas_sprites.zoom_level != prev_zoom:
+                    renpy.call("mas_extra_menu_zoom_callback")
+            except NameError:
+                pass
+            except Exception as e:
+                store.mas_submod_utils.submod_log.error(
+                    "hide_extra_screen zoom_callback 异常：{}".format(e)
+                )
+
+            # 同样把 shield 相关也包一下，防止非 idle 状态下调用出错
+            try:
+                if store.mas_globals.in_idle_mode:
+                    mas_coreToIdleShield()
+                else:
+                    mas_DropShield_core()
+            except Exception as e:
+                store.mas_submod_utils.submod_log.error(
+                    "hide_extra_screen shield 异常：{}".format(e)
+                )
         def np_extra_musiclist():
             hide_extra_screen()
             renpy.call('np_show_userplaylist')
