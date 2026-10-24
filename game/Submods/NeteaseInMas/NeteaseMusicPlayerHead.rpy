@@ -3,7 +3,7 @@ init -990 python:
         author="P",
         name="Netease Music",
         description="在MAS里播放来自网易云的音乐.\n强烈建议使用{a=https://github.com/Legendkiller21/MAS-Submods-Paste}{i}{u}Paste{/u}{/i}{/a}子模组来进行复制粘贴操作。",
-        version='1.9.2',
+        version='1.9.3',
         settings_pane="np_setting_pane"
     )
 init -989 python:
@@ -179,10 +179,10 @@ screen np_setting_pane():
         if persistent._np_unblock_enable:
             textbutton "> 灰色歌曲解灰：已开启":
                 action Function(np_toggle_unblock)
-            python:
-                _src_display = persistent._np_unblock_source if persistent._np_unblock_source else "自动"
-            textbutton "> 解灰音源：[_src_display]":
-                action Show("np_unblock_source_menu")
+            # python:
+            #     _src_display = persistent._np_unblock_source if persistent._np_unblock_source else "自动"
+            # textbutton "> 解灰音源：[_src_display]":
+            #     action Show("np_unblock_source_menu")
         else:
             textbutton "> 灰色歌曲解灰：已关闭":
                 action Function(np_toggle_unblock)
@@ -723,38 +723,38 @@ screen np_music_search_input():
                     action Return("")
 
 # 灰色歌曲解灰音源选择
-screen np_unblock_source_menu():
-    modal True
-    zorder 225
+# screen np_unblock_source_menu():
+#     modal True
+#     zorder 225
 
-    style_prefix "confirm"
+#     style_prefix "confirm"
 
-    frame:
-        align (0.5, 0.5)
-        xfill False
-        yfill False
+#     frame:
+#         align (0.5, 0.5)
+#         xfill False
+#         yfill False
 
-        vbox:
-            spacing 5
+#         vbox:
+#             spacing 5
 
-            label "选择解灰音源":
-                style "confirm_prompt"
-                xalign 0.5
+#             label "选择解灰音源":
+#                 style "confirm_prompt"
+#                 xalign 0.5
 
-            textbutton "自动（推荐）":
-                action [SetField(persistent, "_np_unblock_source", ""), Hide("np_unblock_source_menu")]
-            textbutton "酷我 (kuwo)":
-                action [SetField(persistent, "_np_unblock_source", "kuwo"), Hide("np_unblock_source_menu")]
-            textbutton "酷狗 (kugou)":
-                action [SetField(persistent, "_np_unblock_source", "kugou"), Hide("np_unblock_source_menu")]
-            textbutton "咪咕 (migu)":
-                action [SetField(persistent, "_np_unblock_source", "migu"), Hide("np_unblock_source_menu")]
-            textbutton "QQ音乐 (qq)":
-                action [SetField(persistent, "_np_unblock_source", "qq"), Hide("np_unblock_source_menu")]
-            textbutton "B站 (bilibili)":
-                action [SetField(persistent, "_np_unblock_source", "bilibili"), Hide("np_unblock_source_menu")]
-            textbutton "网易云原生 (netease)":
-                action [SetField(persistent, "_np_unblock_source", "netease"), Hide("np_unblock_source_menu")]
+#             textbutton "自动（推荐）":
+#                 action [SetField(persistent, "_np_unblock_source", ""), Hide("np_unblock_source_menu")]
+#             textbutton "酷我 (kuwo)":
+#                 action [SetField(persistent, "_np_unblock_source", "kuwo"), Hide("np_unblock_source_menu")]
+#             textbutton "酷狗 (kugou)":
+#                 action [SetField(persistent, "_np_unblock_source", "kugou"), Hide("np_unblock_source_menu")]
+#             textbutton "咪咕 (migu)":
+#                 action [SetField(persistent, "_np_unblock_source", "migu"), Hide("np_unblock_source_menu")]
+#             textbutton "QQ音乐 (qq)":
+#                 action [SetField(persistent, "_np_unblock_source", "qq"), Hide("np_unblock_source_menu")]
+#             textbutton "B站 (bilibili)":
+#                 action [SetField(persistent, "_np_unblock_source", "bilibili"), Hide("np_unblock_source_menu")]
+#             textbutton "网易云原生 (netease)":
+#                 action [SetField(persistent, "_np_unblock_source", "netease"), Hide("np_unblock_source_menu")]
 
-            textbutton "关闭":
-                action Hide("np_unblock_source_menu")
+#             textbutton "关闭":
+#                 action Hide("np_unblock_source_menu")
