@@ -992,30 +992,30 @@ init python in np_util:
         except Exception as e:
             submod_log.error("[NP-DEBUG] song/url 异常：{}".format(e))
 
-        # ---- 2. song/download/url ----
-        url1 = np_globals.Mainurl + np_globals.MusicDownloadurl + id + "&br=" + br
-        try:
-            if np_globals._QRLogin:
-                r = requests.post(url1, json={'cookie': np_globals.CookiesQR}, verify=VERIFY, headers=HEADERS, timeout=15)
-            else:
-                r = requests.get(url1, cookies=cookie, verify=VERIFY, headers=HEADERS, timeout=15)
-            j = r.json()
-            d = j.get("data", {}) or {}
-            u = d.get("url")
-            #submod_log.info("[NP-DEBUG] song/download/url 返回：url={}, size={}, time={}, freeTrialInfo={}".format(
-            #    (u[:60] + "...") if u else None,
-            #    d.get("size"),
-            #    d.get("time"),
-            #    d.get("freeTrialInfo")
-            #))
-            if u and not _is_trial(d, u):
-                return u, d.get('size', 0), str(d.get('type', 'mp3')).lower()
-            elif u:
-                #submod_log.info("[NP-DEBUG] song/download/url 判定为试听，跳过")
-                pass
-        except Exception as e:
-            #submod_log.info("[NP-DEBUG] song/download/url 异常：{}".format(e))
-            submod_log.error("[NP-DEBUG] song/download/url 异常：{}".format(e))
+        # # ---- 2. song/download/url ----
+        # url1 = np_globals.Mainurl + np_globals.MusicDownloadurl + id + "&br=" + br
+        # try:
+        #     if np_globals._QRLogin:
+        #         r = requests.post(url1, json={'cookie': np_globals.CookiesQR}, verify=VERIFY, headers=HEADERS, timeout=15)
+        #     else:
+        #         r = requests.get(url1, cookies=cookie, verify=VERIFY, headers=HEADERS, timeout=15)
+        #     j = r.json()
+        #     d = j.get("data", {}) or {}
+        #     u = d.get("url")
+        #     #submod_log.info("[NP-DEBUG] song/download/url 返回：url={}, size={}, time={}, freeTrialInfo={}".format(
+        #     #    (u[:60] + "...") if u else None,
+        #     #    d.get("size"),
+        #     #    d.get("time"),
+        #     #    d.get("freeTrialInfo")
+        #     #))
+        #     if u and not _is_trial(d, u):
+        #         return u, d.get('size', 0), str(d.get('type', 'mp3')).lower()
+        #     elif u:
+        #         #submod_log.info("[NP-DEBUG] song/download/url 判定为试听，跳过")
+        #         pass
+        # except Exception as e:
+        #     #submod_log.info("[NP-DEBUG] song/download/url 异常：{}".format(e))
+        #     submod_log.error("[NP-DEBUG] song/download/url 异常：{}".format(e))
 
 
         # ---- 3. 解灰（仅在开关开启时） ----
