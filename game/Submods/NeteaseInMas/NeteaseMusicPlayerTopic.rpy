@@ -9,6 +9,7 @@ default persistent.np_start_randomplay = False
 default persistent._np_downtimeout = 100
 default persistent._np_unblock_enable = False
 default persistent._np_unblock_source = ""
+default persistent._np_download_br = "320000"
 init 5 python:
     addEvent(
             Event(
@@ -160,7 +161,7 @@ label np_play_musicid:
             elif stat == False:
                 $ store.mas_submod_utils.submod_log.error("[NP-DEBUG] 下载失败，退出。")
                 m 3rksdlb "这首歌我下不了, [player].{w=1.2}{nw}"
-                m "多半是因为网易云没有版权, 换一首或重试一下吧.{w=1.2}{nw}"
+                m "可能是因为没有会员或无版权, 换一首或重试一下吧.{w=1.2}{nw}"
                 $ res.end()
                 call np_timed_text_events_wrapup
                 return

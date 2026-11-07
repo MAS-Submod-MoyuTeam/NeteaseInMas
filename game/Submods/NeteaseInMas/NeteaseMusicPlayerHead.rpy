@@ -103,6 +103,17 @@ init -5 python:
         hide_extra_screen()
         renpy.call('np_random')
         renpy.jump('mas_extra_menu_close_p2')
+
+    def np_get_br_display():
+        """把 persistent 里的 br 值转成可读文字"""
+        _br_map = {
+            "128000": "128kbps",
+            "192000": "192kbps",
+            "320000": "320kbps",
+            "999000": "无损 (flac)",
+        }
+        _br = str(persistent._np_download_br)
+        return _br_map.get(_br, _br)
         
 
     np_buttontip_login = "登录网易云音乐"
@@ -116,6 +127,7 @@ screen np_setting_pane():
     python:
         np_screen_tt = store.renpy.get_screen("submods", "screens").scope["tooltip"]
         np_catchsize = round(np_util.Catch_size()/1024/1024, 2)
+        np_br_display = np_get_br_display()
     $ warn_message = "Netease Music不会将您的密码上传至任何第三者, 且密码上传时先在本地使用MD5加密. 下载时要确保从正确的渠道下载，因为别人发的版本可能存在后门:)\n官方Github存储库：{a=https://github.com/MAS-Submod-MoyuTeam/NeteaseInMas}点我{/a}"
 #    """
 #    Submod菜单:
@@ -186,6 +198,10 @@ screen np_setting_pane():
         else:
             textbutton "> 灰色歌曲解灰：已关闭":
                 action Function(np_toggle_unblock)
+        textbutton "> 下载码率：[np_br_display]":
+            hovered SetField(np_screen_tt, "value", "选择下载时请求的码率，越高音质越好；『无损』会先下 flac 再转 mp3")
+            unhovered SetField(np_screen_tt, "value", np_screen_tt.default)
+            action Show("np_br_menu")
         textbutton "> 安全性问题说明":
             action Show("np_message", message = warn_message)
 
@@ -721,6 +737,38 @@ screen np_music_search_input():
                     action SetVariable("np_search_input_value", "")
                 textbutton _("取消"):
                     action Return("")
+
+screen np_br_menu():
+    modal True
+    zorder 225
+
+    style_prefix "confirm"
+
+    frame:
+        align (0.5, 0.5)
+        xfill False
+        yfill False
+
+        vbox:
+            spacing 5
+
+            label "选择下载码率":
+                style "confirm_prompt"
+                xalign 0.5
+
+            #text "{size=-10}『无损』会先请求 flac 再转码为 320k mp3{/size}"
+
+            textbutton "128kbps":
+                action [SetField(persistent, "_np_download_br", "128000"), Hide("np_br_menu")]
+            textbutton "192kbps":
+                action [SetField(persistent, "_np_download_br", "192000"), Hide("np_br_menu")]
+            textbutton "320kbps (推荐)":
+                action [SetField(persistent, "_np_download_br", "320000"), Hide("np_br_menu")]
+            textbutton "无损 (flac)":
+                action [SetField(persistent, "_np_download_br", "999000"), Hide("np_br_menu")]
+
+            textbutton "关闭":
+                action Hide("np_br_menu")
 
 # 灰色歌曲解灰音源选择
 # screen np_unblock_source_menu():
